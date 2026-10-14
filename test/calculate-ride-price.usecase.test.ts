@@ -11,6 +11,7 @@ describe("CalculatePriceUsecase", () => {
     it("should return 2 for Paris to Paris", () => {
         expect(
             calculPriceUsecase.execute({
+                id: "ride-1",
                 departure: "Paris",
                 destination: "Paris",
                 distanceKm: 0,
@@ -21,6 +22,7 @@ describe("CalculatePriceUsecase", () => {
     it("should return 0 for a ride from outside Paris to Paris", () => {
         expect(
             calculPriceUsecase.execute({
+                id: "ride-1",
                 departure: "outsideParis",
                 destination: "Paris",
                 distanceKm: 0,
@@ -31,6 +33,7 @@ describe("CalculatePriceUsecase", () => {
     it("should return 10 for a ride from Paris to outside Paris", () => {
         expect(
             calculPriceUsecase.execute({
+                id: "ride-1",
                 departure: "Paris",
                 destination: "outsideParis",
                 distanceKm: 0,
@@ -41,6 +44,7 @@ describe("CalculatePriceUsecase", () => {
     it("should return 7 for a 10 km ride from Paris to Paris", () => {
         expect(
             calculPriceUsecase.execute({
+                id: "ride-1",
                 departure: "Paris",
                 destination: "Paris",
                 distanceKm: 10,

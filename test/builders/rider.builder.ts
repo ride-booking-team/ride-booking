@@ -1,27 +1,25 @@
-import type { Rider } from "../../src/domain/models/rider.js";
+import { Rider } from "../../src/domain/models/rider.js";
 
 export class RiderBuilder {
-    private rider: Rider = {
-        id: "rider-1",
-        balance: 10,
-        birthDate: new Date("2000-01-01"),
-    };
+    private id = "rider-1";
+    private balance = 10;
+    private birthDate = new Date("2000-01-01");
 
     withId(id: string): this {
-        this.rider.id = id;
+        this.id = id;
         return this;
     }
 
     withBalance(balance: number): this {
-        this.rider.balance = balance;
+        this.balance = balance;
         return this;
     }
     withBirthDate(birthDate: Date) {
-        this.rider.birthDate = birthDate;
+        this.birthDate = birthDate;
         return this;
     }
 
     build(): Rider {
-        return { ...this.rider };
+        return new Rider(this.id, this.balance, this.birthDate);
     }
 }
