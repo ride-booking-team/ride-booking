@@ -66,7 +66,7 @@ describe("BookRideUseCase", () => {
 
         const existingBooking = new BookingBuilder()
             .withRider(rider)
-            .withPendingBooking(true)
+            .withStatus("pending")
             .build();
 
         await fakeBookingRepository.save(existingBooking);
@@ -97,7 +97,7 @@ describe("BookRideUseCase", () => {
             id: result!.id,
             rider,
             ride,
-            hasPendingBooking: true,
+            status: "pending",
         });
     });
 
@@ -106,7 +106,7 @@ describe("BookRideUseCase", () => {
 
         const existingBooking = new BookingBuilder()
             .withRider(rider)
-            .withPendingBooking(true)
+            .withStatus("pending")
             .build();
 
         await fakeBookingRepository.save(existingBooking);
@@ -124,7 +124,7 @@ describe("BookRideUseCase", () => {
 
         const existingBooking = new BookingBuilder()
             .withRider(rider)
-            .withPendingBooking(true)
+            .withStatus("pending")
             .withDriverId("driver-1")
             .build();
         idGenerator.id = "booking-1"
