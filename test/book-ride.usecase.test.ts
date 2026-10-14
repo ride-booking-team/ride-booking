@@ -1,62 +1,74 @@
+
 import { describe, it, expect, beforeEach } from "vitest";
 import { BookingBuilder } from "./builders/booking.builder.js";
 import { RiderBuilder } from "./builders/rider.builder.js";
 import { RideBuilder } from "./builders/ride.builder.js";
-import { CalculatePriceUsecase } from "../src/calculate-price.usecase.js";
-import { BookRideUseCase } from "../src/book-ride.usecase.js";
+import { CalculatePriceUsecase } from "../src/application/use-cases/calculate-price.usecase.js";
+import { BookRideUseCase } from "../src/application/use-cases/book-ride.usecase.js";
 import { FakeBookingRepository } from "./fakes/fake-booking.repository.js";
+import { FakeRiderRepository } from "./fakes/fake-rider.repository.js";
 import { StubIDGenerator } from "./stub-id-generator.provider.js";
 
 describe("BookRideUseCase", () => {
     let calculatePriceUsecase: CalculatePriceUsecase;
     let bookRideUseCase: BookRideUseCase;
     let fakeBookingRepository: FakeBookingRepository;
+    let fakeRiderRepository: FakeRiderRepository;
     let idGenerator: StubIDGenerator;
 
     beforeEach(() => {
         calculatePriceUsecase = new CalculatePriceUsecase();
         fakeBookingRepository = new FakeBookingRepository();
+        fakeRiderRepository = new FakeRiderRepository();
         idGenerator = new StubIDGenerator();
-        
 
         bookRideUseCase = new BookRideUseCase(
             calculatePriceUsecase,
             idGenerator,
             fakeBookingRepository,
+            fakeRiderRepository,
         );
     });
 
     it("should reject a ride when the rider has insufficient balance", async () => {
-        const params = {
-            rider: new RiderBuilder().withBalance(1).build(),
-            ride: new RideBuilder().build(),
-        };
+        const rider = new RiderBuilder().withBalance(1).build();
+        const ride = new RideBuilder().build();
 
-        const result = await bookRideUseCase.execute(params);
+        await fakeRiderRepository.save(rider);
+
+        const result = await bookRideUseCase.execute({
+            riderId: rider.id,
+            ride,
+        });
 
         expect(result).toBeNull();
     });
 
     it("should create a booking when the rider has sufficient balance", async () => {
-        const params = {
-            rider: new RiderBuilder().withBalance(10).build(),
-            ride: new RideBuilder().build(),
-        };
+        const rider = new RiderBuilder().withBalance(10).build();
+        const ride = new RideBuilder().build();
 
-        const result = await bookRideUseCase.execute(params);
+        await fakeRiderRepository.save(rider);
+
+        const result = await bookRideUseCase.execute({
+            riderId: rider.id,
+            ride,
+        });
 
         expect(result).not.toBeNull();
     });
 
     it("should return an id when we create a booking ", async () => {
-        const params = {
-            rider: new RiderBuilder().withBalance(10).build(),
-            ride: new RideBuilder().build(),
-        };
+        const rider = new RiderBuilder().withBalance(10).build();
+        const ride = new RideBuilder().build();
 
-        idGenerator.id = "booking-1"
+        await fakeRiderRepository.save(rider);
+        idGenerator.id = "booking-1";
 
-        const result = await bookRideUseCase.execute(params);
+        const result = await bookRideUseCase.execute({
+            riderId: rider.id,
+            ride,
+        });
 
         expect(result).toEqual({ id: "booking-1" });
     });
@@ -64,19 +76,19 @@ describe("BookRideUseCase", () => {
     it("should reject booking when the rider already has a pending booking", async () => {
         const rider = new RiderBuilder().build();
 
+        await fakeRiderRepository.save(rider);
+
         const existingBooking = new BookingBuilder()
-            .withRider(rider)
+            .withRiderId(rider.id)
             .withStatus("pending")
             .build();
 
         await fakeBookingRepository.save(existingBooking);
 
-        const params = {
-            rider,
+        const result = await bookRideUseCase.execute({
+            riderId: rider.id,
             ride: new RideBuilder().build(),
-        };
-
-        const result = await bookRideUseCase.execute(params);
+        });
 
         expect(result).toBeNull();
     });
@@ -85,7 +97,13 @@ describe("BookRideUseCase", () => {
         const rider = new RiderBuilder().build();
         const ride = new RideBuilder().build();
 
-        const result = await bookRideUseCase.execute({ rider, ride });
+        await fakeRiderRepository.save(rider);
+        idGenerator.id = "booking-1";
+
+        const result = await bookRideUseCase.execute({
+            riderId: rider.id,
+            ride,
+        });
 
         expect(result).not.toBeNull();
 
@@ -95,7 +113,7 @@ describe("BookRideUseCase", () => {
         expect(savedBookings).toHaveLength(1);
         expect(savedBookings[0]).toMatchObject({
             id: result!.id,
-            rider,
+            riderId: rider.id,
             ride,
             status: "pending",
         });
@@ -104,15 +122,17 @@ describe("BookRideUseCase", () => {
     it("should reject another booking when no driver is assigned", async () => {
         const rider = new RiderBuilder().build();
 
+        await fakeRiderRepository.save(rider);
+
         const existingBooking = new BookingBuilder()
-            .withRider(rider)
+            .withRiderId(rider.id)
             .withStatus("pending")
             .build();
 
         await fakeBookingRepository.save(existingBooking);
 
         const result = await bookRideUseCase.execute({
-            rider,
+            riderId: rider.id,
             ride: new RideBuilder().build(),
         });
 
@@ -122,17 +142,20 @@ describe("BookRideUseCase", () => {
     it("should allow another booking when a driver is assigned", async () => {
         const rider = new RiderBuilder().build();
 
+        await fakeRiderRepository.save(rider);
+
         const existingBooking = new BookingBuilder()
-            .withRider(rider)
+            .withRiderId(rider.id)
             .withStatus("pending")
             .withDriverId("driver-1")
             .build();
-        idGenerator.id = "booking-1"
 
         await fakeBookingRepository.save(existingBooking);
 
+        idGenerator.id = "booking-1";
+
         const result = await bookRideUseCase.execute({
-            rider,
+            riderId: rider.id,
             ride: new RideBuilder().build(),
         });
 

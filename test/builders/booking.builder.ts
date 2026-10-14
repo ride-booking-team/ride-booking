@@ -1,11 +1,10 @@
-import type {Booking, BookingStatus} from "../../src/booking.js";
+import type {Booking, BookingStatus} from "../../src/domain/models/booking.js";
 import { RideBuilder } from "./ride.builder.js";
-import { RiderBuilder } from "./rider.builder.js";
 
 export class BookingBuilder {
     private booking: Booking = {
         id: "",
-        rider: new RiderBuilder().build(),
+        riderId: "rider-1",
         ride: new RideBuilder().build(),
         status: "pending",
     };
@@ -15,8 +14,8 @@ export class BookingBuilder {
         return this;
     }
 
-    withRider(rider: Booking["rider"]): this {
-        this.booking.rider = rider;
+    withRiderId(riderId: string): BookingBuilder {
+        this.booking.riderId = riderId;
         return this;
     }
 
@@ -38,7 +37,6 @@ export class BookingBuilder {
     build(): Booking {
         return {
             ...this.booking,
-            rider: { ...this.booking.rider },
             ride: { ...this.booking.ride },
         };
     }

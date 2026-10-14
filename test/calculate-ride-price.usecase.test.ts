@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { CalculatePriceUsecase } from "../src/calculate-price.usecase.js";
+import { CalculatePriceUsecase } from "../src/application/use-cases/calculate-price.usecase.js";
 
 describe("CalculatePriceUsecase", () => {
     let calculPriceUsecase: CalculatePriceUsecase;
