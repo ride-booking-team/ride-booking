@@ -1,4 +1,4 @@
-import type { DateProvider } from "../src/date.provider.js";
+import type { DateProvider } from "../src/domain/ports/date.provider.js";
 
 export class StubDateProvider implements DateProvider {
     date = new Date("2026-10-14");

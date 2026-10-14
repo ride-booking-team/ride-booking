@@ -1,4 +1,4 @@
-import type { Ride } from "../../src/ride.js";
+import type { Ride } from "../../src/domain/models/ride.js";
 
 export class RideBuilder {
     private ride: Ride = {

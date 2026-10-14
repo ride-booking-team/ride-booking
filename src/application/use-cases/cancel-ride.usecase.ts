@@ -1,10 +1,12 @@
-import type { BookingRepository } from "./booking.repository.js";
-import type {DateProvider} from "./date.provider.js";
+import type { BookingRepository } from "../../domain/ports/booking.repository.js";
+import type {DateProvider} from "../../domain/ports/date.provider.js";
+import type {RiderRepository} from "../../domain/ports/rider.repository.js";
 
 export class CancelRideUseCase {
     constructor(
         private readonly bookingRepository: BookingRepository,
         private readonly dateProvider: DateProvider,
+        private readonly riderRepository: RiderRepository,
     ) {}
 
     async execute(
@@ -18,17 +20,25 @@ export class CancelRideUseCase {
         if (booking.status === "cancelled") {
             return null;
         }
+        const rider = await this.riderRepository.findById(booking.riderId);
+
+        if (!rider) {
+            return null;
+        }
+
 
         const today = this.dateProvider.now();
-        const birthDate = booking.rider.birthDate;
+        const birthDate = rider.birthDate;
 
         const isBirthday =
             today.getUTCDate() === birthDate.getUTCDate() &&
             today.getUTCMonth() === birthDate.getUTCMonth();
         const penalty = booking.status === "on_the_way" && !isBirthday ? 5 : 0;
 
-        booking.rider.balance -= penalty;
+        rider.balance -= penalty;
         booking.status = "cancelled";
+
+        await this.riderRepository.save(rider);
         await this.bookingRepository.save(booking);
 
         return { penalty };

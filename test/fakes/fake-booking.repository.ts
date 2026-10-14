@@ -1,5 +1,5 @@
-import type { BookingRepository } from "../../src/booking.repository.js";
-import type { Booking } from "../../src/booking.js";
+import type { BookingRepository } from "../../src/domain/ports/booking.repository.js";
+import type { Booking } from "../../src/domain/models/booking.js";
 
 export class FakeBookingRepository implements BookingRepository {
     private bookings: Booking[] = [];
@@ -17,9 +17,9 @@ export class FakeBookingRepository implements BookingRepository {
     }
 
     async findByRiderId(riderId: string): Promise<Booking[]> {
-        return this.bookings.filter(
-            (booking) => booking.rider.id === riderId,
-        );
+        return this.bookings
+            .filter((booking) => booking.riderId === riderId)
+            .map((booking) => ({ ...booking }));
     }
     async findById(id: string): Promise<Booking | null> {
         return this.bookings.find((booking) => booking.id === id) ?? null;

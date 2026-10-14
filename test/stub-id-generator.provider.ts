@@ -1,4 +1,4 @@
-import type { IDGenerator } from "../src/id-generator.provider.js";
+import type { IDGenerator } from "../src/domain/ports/id-generator.provider.js";
 
 export class StubIDGenerator implements IDGenerator {
         id: string = "";

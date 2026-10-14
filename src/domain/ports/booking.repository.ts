@@ -1,4 +1,4 @@
-import type { Booking } from "./booking.js";
+import type { Booking } from "../models/booking.js";
 
 export interface BookingRepository{
     save(booking: Booking): Promise<void>;

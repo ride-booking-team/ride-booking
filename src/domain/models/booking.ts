@@ -5,7 +5,7 @@ export type BookingStatus = "pending" | "assigned" | "cancelled" | "on_the_way";
 export type Booking = {
     id: string,
     ride: Ride,
-    rider: Rider,
+    riderId: string;
     status: BookingStatus;
     driverId?: string;
 }
