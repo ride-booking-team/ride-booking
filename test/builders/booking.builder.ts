@@ -1,34 +1,40 @@
-import type { Ride } from "../../src/ride.js";
-import type { Rider } from "../../src/rider.js";
-import type { Booking } from "../book-ride.usecase.test.js";
+import type { Booking } from "../../src/booking.js";
 import { RideBuilder } from "./ride.builder.js";
 import { RiderBuilder } from "./rider.builder.js";
 
 export class BookingBuilder {
-    private rider: Rider = new RiderBuilder().build();
-    private ride: Ride = new RideBuilder().build();
-    private hasPendingBooking = false;
+    private booking: Booking = {
+        id: "booking-1",
+        rider: new RiderBuilder().build(),
+        ride: new RideBuilder().build(),
+        hasPendingBooking: false,
+    };
 
-    withRider(rider: Rider): this {
-        this.rider = rider;
+    withId(id: string): this {
+        this.booking.id = id;
         return this;
     }
 
-    withRide(ride: Ride): this {
-        this.ride = ride;
+    withRider(rider: Booking["rider"]): this {
+        this.booking.rider = rider;
+        return this;
+    }
+
+    withRide(ride: Booking["ride"]): this {
+        this.booking.ride = ride;
         return this;
     }
 
     withPendingBooking(hasPendingBooking: boolean): this {
-        this.hasPendingBooking = hasPendingBooking;
+        this.booking.hasPendingBooking = hasPendingBooking;
         return this;
     }
 
     build(): Booking {
         return {
-            rider: { ...this.rider },
-            ride: { ...this.ride },
-            hasPendingBooking: this.hasPendingBooking,
+            ...this.booking,
+            rider: { ...this.booking.rider },
+            ride: { ...this.booking.ride },
         };
     }
 }
