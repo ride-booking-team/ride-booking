@@ -1,48 +1,92 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { BookingBuilder } from "./builders/booking.builder.js";
 import { RiderBuilder } from "./builders/rider.builder.js";
+import { RideBuilder } from "./builders/ride.builder.js";
 import { CalculatePriceUsecase } from "../src/calculate-price.usecase.js";
 import { BookRideUseCase } from "../src/book-ride.usecase.js";
-import type { BookingRepository } from "../src/booking.repository.js";
 import { FakeBookingRepository } from "./fakes/fake-booking.repository.js";
 import { StubIDGenerator } from "./stub-id-generator.provider.js";
 
-describe("CalculatePriceUsecase", () => {
-    let calculPriceUsecase: CalculatePriceUsecase;
+describe("BookRideUseCase", () => {
+    let calculatePriceUsecase: CalculatePriceUsecase;
     let bookRideUseCase: BookRideUseCase;
     let fakeBookingRepository: FakeBookingRepository;
     let idGenerator: StubIDGenerator;
 
     beforeEach(() => {
-        calculPriceUsecase = new CalculatePriceUsecase();
-        fakeBookingRepository = new FakeBookingRepository()
-        idGenerator = new StubIDGenerator()
-        bookRideUseCase = new BookRideUseCase(calculPriceUsecase, idGenerator, fakeBookingRepository);
+        calculatePriceUsecase = new CalculatePriceUsecase();
+        fakeBookingRepository = new FakeBookingRepository();
+        idGenerator = new StubIDGenerator();
+        
+
+        bookRideUseCase = new BookRideUseCase(
+            calculatePriceUsecase,
+            idGenerator,
+            fakeBookingRepository,
+        );
     });
 
-    it("should not be able to book a ride (low balance)", () => {
-        const bookingLowBalance = new BookingBuilder()
-        .withRider(new RiderBuilder().withBalance(1).build())
-        .build();
-        const bookstatus = bookRideUseCase.execute(bookingLowBalance);
+    it("should reject a ride when the rider has insufficient balance", async () => {
+        const params = {
+            rider: new RiderBuilder().withBalance(1).build(),
+            ride: new RideBuilder().build(),
+        };
 
-        expect(bookstatus).toBe(false);
+        const result = await bookRideUseCase.execute(params);
+
+        expect(result).toBeNull();
     });
 
-    it("should be able to book a ride (higher balance)", () => {
-        const bookingHighBalance = new BookingBuilder().build();
-        const bookstatus = bookRideUseCase.execute(bookingHighBalance);
+    it("should create a booking when the rider has sufficient balance", async () => {
+        const params = {
+            rider: new RiderBuilder().withBalance(10).build(),
+            ride: new RideBuilder().build(),
+        };
 
-        expect(bookstatus).toBe(true);
+        idGenerator.id = "booking-1"
+        
+        const result = await bookRideUseCase.execute(params);
+
+        expect(result).toEqual({ id: "booking-1" });
     });
 
-    it("should reject booking when the rider has an unassigned active reservation", () => {
-        const failedBooking = new BookingBuilder().withPendingBooking(true).build();
-        const bookstatus = bookRideUseCase.execute(failedBooking);
+    it("should reject booking when the rider already has a pending booking", async () => {
+        const rider = new RiderBuilder().build();
 
-        expect(bookstatus).toBe(false);
-    })
+        const existingBooking = new BookingBuilder()
+            .withRider(rider)
+            .withPendingBooking(true)
+            .build();
 
-    it("should return an ID ")
+        await fakeBookingRepository.save(existingBooking);
 
+        const params = {
+            rider,
+            ride: new RideBuilder().build(),
+        };
+
+        const result = await bookRideUseCase.execute(params);
+
+        expect(result).toBeNull();
+    });
+
+    it("should save the newly created booking", async () => {
+        const rider = new RiderBuilder().build();
+        const ride = new RideBuilder().build();
+
+        const result = await bookRideUseCase.execute({ rider, ride });
+
+        expect(result).not.toBeNull();
+
+        const savedBookings =
+            await fakeBookingRepository.findByRiderId(rider.id);
+
+        expect(savedBookings).toHaveLength(1);
+        expect(savedBookings[0]).toMatchObject({
+            id: result!.id,
+            rider,
+            ride,
+            hasPendingBooking: true,
+        });
+    });
 });

@@ -4,7 +4,7 @@ import { RiderBuilder } from "./rider.builder.js";
 
 export class BookingBuilder {
     private booking: Booking = {
-        id: "booking-1",
+        id: "",
         rider: new RiderBuilder().build(),
         ride: new RideBuilder().build(),
         hasPendingBooking: false,
