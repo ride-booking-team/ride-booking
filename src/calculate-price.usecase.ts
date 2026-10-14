@@ -1,8 +1,5 @@
-export type Ride = {
-    departure: string;
-    destination: string;
-    distanceKm: number;
-};
+import type { Ride } from "./ride.js";
+
 export class CalculatePriceUsecase {
     execute(ride: Ride): number {
         const { departure, destination, distanceKm } = ride;

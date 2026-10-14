@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { CalculatePriceUsecase, type Ride } from "../src/calculate-price.usecase.js";
+import type { Rider } from "../src/rider.js";
+import { BookingBuilder } from "./builders/booking.builder.js";
+import { RiderBuilder } from "./builders/rider.builder.js";
+import { CalculatePriceUsecase } from "../src/calculate-price.usecase.js";
+import type { Ride } from "../src/ride.js";
 
 describe("CalculatePriceUsecase", () => {
     let calculPriceUsecase: CalculatePriceUsecase;
@@ -10,41 +14,27 @@ describe("CalculatePriceUsecase", () => {
         bookRideUseCase = new BookRideUseCase(calculPriceUsecase);
     });
 
-    const ride2e : Ride = {
-            departure: "Paris",
-            destination: "Paris",
-            distanceKm: 0,
-        };
+    const bookingHighBalance = new BookingBuilder().build();
+    const bookingLowBalance = new BookingBuilder()
+        .withRider(new RiderBuilder().withBalance(1).build())
+        .build();
+    const failedBooking = new BookingBuilder().withPendingBooking(true).build();
 
-    const bookingSuccess: Booking = {
-        ride: ride2e,
-        riderBalance: 10,
-        hasPendingBooking: false,
-    }  
-    
-    const bookingFail: Booking = {
-        ride: ride2e,
-        riderBalance: 10,
-        hasPendingBooking: true,
-    }
+       
+
 
     it("should not be able to book a ride (low balance)", () => {
-        const bookstatus = bookRideUseCase.execute(bookingSuccess);
-        expect(bookstatus).toBe(true);
-    });
-
-    it("should be able to book a ride (same balance)", () => {
-        const bookstatus = bookRideUseCase.execute(bookingSuccess);
-        expect(bookstatus).toBe(true);
+        const bookstatus = bookRideUseCase.execute(bookingLowBalance);
+        expect(bookstatus).toBe(false);
     });
 
     it("should be able to book a ride (higher balance)", () => {
-        const bookstatus = bookRideUseCase.execute(bookingSuccess);
+        const bookstatus = bookRideUseCase.execute(bookingHighBalance);
         expect(bookstatus).toBe(true);
     });
 
     it("should reject booking when the rider has an unassigned active reservation", () => {
-        const bookstatus = bookRideUseCase.execute(bookingFail);
+        const bookstatus = bookRideUseCase.execute(failedBooking);
 
         expect(bookstatus).toBe(false);
     })
@@ -53,7 +43,7 @@ describe("CalculatePriceUsecase", () => {
 
 export type Booking = {
     ride: Ride,
-    riderBalance: number,
+    rider: Rider,
     hasPendingBooking?: boolean,
 }
 
@@ -66,6 +56,6 @@ export class BookRideUseCase {
         const ridePrice = this.calculatePrice.execute(booking.ride)
 
         if(booking.hasPendingBooking) return false;
-        return booking.riderBalance >= ridePrice;
+        return booking.rider.balance >= ridePrice;
     }
 }
