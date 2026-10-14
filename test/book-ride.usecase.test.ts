@@ -43,8 +43,19 @@ describe("BookRideUseCase", () => {
             ride: new RideBuilder().build(),
         };
 
+        const result = await bookRideUseCase.execute(params);
+
+        expect(result).not.toBeNull();
+    });
+
+    it("should return an id when we create a booking ", async () => {
+        const params = {
+            rider: new RiderBuilder().withBalance(10).build(),
+            ride: new RideBuilder().build(),
+        };
+
         idGenerator.id = "booking-1"
-        
+
         const result = await bookRideUseCase.execute(params);
 
         expect(result).toEqual({ id: "booking-1" });
@@ -88,5 +99,43 @@ describe("BookRideUseCase", () => {
             ride,
             hasPendingBooking: true,
         });
+    });
+
+    it("should reject another booking when no driver is assigned", async () => {
+        const rider = new RiderBuilder().build();
+
+        const existingBooking = new BookingBuilder()
+            .withRider(rider)
+            .withPendingBooking(true)
+            .build();
+
+        await fakeBookingRepository.save(existingBooking);
+
+        const result = await bookRideUseCase.execute({
+            rider,
+            ride: new RideBuilder().build(),
+        });
+
+        expect(result).toBeNull();
+    });
+
+    it("should allow another booking when a driver is assigned", async () => {
+        const rider = new RiderBuilder().build();
+
+        const existingBooking = new BookingBuilder()
+            .withRider(rider)
+            .withPendingBooking(true)
+            .withDriverId("driver-1")
+            .build();
+        idGenerator.id = "booking-1"
+
+        await fakeBookingRepository.save(existingBooking);
+
+        const result = await bookRideUseCase.execute({
+            rider,
+            ride: new RideBuilder().build(),
+        });
+
+        expect(result).toEqual({ id: "booking-1" });
     });
 });

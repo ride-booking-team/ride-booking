@@ -6,4 +6,5 @@ export type Booking = {
     ride: Ride,
     rider: Rider,
     hasPendingBooking?: boolean,
+    driverId?: string;
 }

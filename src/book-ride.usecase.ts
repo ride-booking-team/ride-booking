@@ -27,7 +27,7 @@ export class BookRideUseCase {
         const existingBookings =
             await this.bookingRepository.findByRiderId(params.rider.id);
 
-        if (existingBookings.some((booking) => booking.hasPendingBooking)) {
+        if (existingBookings.some((booking) => booking.hasPendingBooking && !booking.driverId)) {
             return null;
         }
 

@@ -30,6 +30,11 @@ export class BookingBuilder {
         return this;
     }
 
+    withDriverId(driverId: string) {
+        this.booking.driverId = driverId;
+        return this;
+    }
+
     build(): Booking {
         return {
             ...this.booking,
