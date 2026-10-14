@@ -1,4 +1,4 @@
-import type { Booking } from "../../src/booking.js";
+import type {Booking, BookingStatus} from "../../src/booking.js";
 import { RideBuilder } from "./ride.builder.js";
 import { RiderBuilder } from "./rider.builder.js";
 
@@ -7,7 +7,7 @@ export class BookingBuilder {
         id: "",
         rider: new RiderBuilder().build(),
         ride: new RideBuilder().build(),
-        hasPendingBooking: false,
+        status: "pending",
     };
 
     withId(id: string): this {
@@ -25,8 +25,8 @@ export class BookingBuilder {
         return this;
     }
 
-    withPendingBooking(hasPendingBooking: boolean): this {
-        this.booking.hasPendingBooking = hasPendingBooking;
+    withStatus(status: BookingStatus) {
+        this.booking.status = status;
         return this;
     }
 
