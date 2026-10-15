@@ -14,15 +14,15 @@ type BookingProps = {
 export class Booking {
     readonly id: string;
     readonly riderId: string;
-    readonly driverId: string | undefined;
 
     private readonly rideValue: Ride;
     private statusValue: BookingStatus;
+    private driverIdValue: string | undefined;
 
     constructor({ id, ride, riderId, status, driverId }: BookingProps) {
         this.id = id;
         this.riderId = riderId;
-        this.driverId = driverId;
+        this.driverIdValue = driverId;
         this.rideValue = { ...ride };
         this.statusValue = status;
     }
@@ -35,8 +35,21 @@ export class Booking {
         return this.statusValue;
     }
 
+    get driverId(): string | undefined {
+        return this.driverIdValue;
+    }
+
     isWaitingForDriver(): boolean {
-        return this.statusValue.equals(BookingStatus.PENDING) && !this.driverId;
+        return this.statusValue.equals(BookingStatus.PENDING) && !this.driverIdValue;
+    }
+
+    assignDriver(driverId: string): void {
+        if (this.statusValue.equals(BookingStatus.CANCELLED)) {
+            throw new Error("cannot assign a driver to a cancelled booking");
+        }
+
+        this.driverIdValue = driverId;
+        this.statusValue = BookingStatus.ASSIGNED;
     }
 
     /**
