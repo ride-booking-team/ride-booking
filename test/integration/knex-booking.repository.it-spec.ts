@@ -42,6 +42,7 @@ describe("KnexBookingRepository", () => {
             id: "booking-1",
             riderId: "rider-1",
             status: BookingStatus.PENDING,
+            price: 240,
             ride: {
                 id: "ride-1",
                 departure: "Paris",
@@ -69,6 +70,7 @@ describe("KnexBookingRepository", () => {
         expect(savedBooking.departure).toBe("Paris");
         expect(savedBooking.destination).toBe("Lyon");
         expect(Number(savedBooking.distance_km)).toBe(460);
+        expect(Number(savedBooking.price)).toBe(240);
     });
 
     it("should reject a booking with an unknown driver", async () => {
@@ -83,6 +85,7 @@ describe("KnexBookingRepository", () => {
             riderId: "rider-1",
             driverId: "unknown-driver",
             status: BookingStatus.ASSIGNED,
+            price: 240,
             ride: {
                 id: "ride-1",
                 departure: "Paris",

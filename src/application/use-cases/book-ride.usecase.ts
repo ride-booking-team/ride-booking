@@ -7,13 +7,16 @@ import type { Rider } from "../../domain/models/rider.js";
 import type {RiderRepository} from "../../domain/ports/rider.repository.js";
 import { BookingStatus } from "../../domain/value-objects/booking-status.js";
 import type { RouteScanner } from "../../domain/ports/route.scanner.js";
+import type { PriceQuoteRepository } from "../../domain/ports/price-quote.repository.js";
+import type { DateProvider } from "../../domain/ports/date.provider.js";
+import { QuoteExpiredError } from "../../domain/errors/quote-expired-error.js";
+import { UnknownQuoteError } from "../../domain/errors/unknown-quote-error.js";
+import { QuoteAlreadyUsedError } from "../../domain/errors/quote-already-used-error.js";
+import type { PriceQuote } from "../../domain/models/price-quote.js";
 
-export type BookRideParams = {
-    riderId: string;
-    from: string;
-    to: string;
-    uberX?: boolean;
-};
+export type BookRideParams =
+    | { riderId: string; from: string; to: string; uberX?: boolean }
+    | { riderId: string; token: string };
 
 export class BookRideUseCase {
     constructor(
@@ -22,6 +25,8 @@ export class BookRideUseCase {
         private readonly bookingRepository: BookingRepository,
         private readonly riderRepository: RiderRepository,
         private readonly routeScanner: RouteScanner,
+        private readonly quoteRepository: PriceQuoteRepository,
+        private readonly dateProvider: DateProvider,
     ) {}
 
     async execute(params: BookRideParams): Promise<{ id: string } | null> {
@@ -31,18 +36,41 @@ export class BookRideUseCase {
             return null;
         }
 
-        const route = await this.routeScanner.scan(params.from, params.to);
-        const ride: Ride = {
-            id: this.idGenerator.generate(),
-            departure: route.departureCity,
-            destination: route.destinationCity,
-            distanceKm: route.distanceKm,
-        }
+        let ride: Ride;
+        let price: number;
+        let quote: PriceQuote | null = null;
 
-        const price = this.calculatePriceUsecase.execute(ride, {
-            uberX: params.uberX ?? false,
-            rider,
-        });
+        if ("token" in params) {
+            // Avec un token : on reprend le devis, sans rescanner ni recalculer.
+            quote = await this.quoteRepository.findByToken(params.token);
+
+            if (!quote || quote.riderId !== params.riderId) {
+                throw new UnknownQuoteError(params.token);
+            }
+
+            if (quote.isUsed) {
+                throw new QuoteAlreadyUsedError(params.token);
+            }
+
+            if (quote.isExpired(this.dateProvider.now())) {
+                throw new QuoteExpiredError(params.token);
+            }
+
+            ride = quote.ride;
+            price = quote.price;
+        } else {
+            const route = await this.routeScanner.scan(params.from, params.to);
+            ride = {
+                id: this.idGenerator.generate(),
+                departure: route.departureCity,
+                destination: route.destinationCity,
+                distanceKm: route.distanceKm,
+            };
+            price = this.calculatePriceUsecase.execute(ride, {
+                uberX: params.uberX ?? false,
+                rider,
+            });
+        }
 
         const existingBookings =
             await this.bookingRepository.findByRiderId(rider.id);
@@ -55,9 +83,15 @@ export class BookRideUseCase {
             riderId: rider.id,
             ride,
             status: BookingStatus.PENDING,
+            price,
         });
 
         await this.bookingRepository.save(booking);
+
+        if (quote) {
+            quote.markAsUsed();
+            await this.quoteRepository.save(quote);
+        }
 
         return { id: booking.id };
     }

@@ -10,6 +10,7 @@ export type BookingRow = {
     departure: string;
     destination: string;
     distance_km: number | string;
+    price: number | string;
 };
 
 /**
@@ -26,6 +27,7 @@ export function toBookingRow(booking: Booking): BookingRow {
         departure: booking.ride.departure,
         destination: booking.ride.destination,
         distance_km: booking.ride.distanceKm,
+        price: booking.price,
     };
 }
 
@@ -38,6 +40,7 @@ export function toBooking(row: BookingRow): Booking {
         id: row.id,
         riderId: row.rider_id,
         status: BookingStatus.of(row.status),
+        price: Number(row.price),
         driverId: row.driver_id ?? undefined,
         ride: {
             id: row.ride_id,

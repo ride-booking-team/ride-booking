@@ -8,6 +8,7 @@ export class BookingBuilder {
     private riderId = "rider-1";
     private ride: Ride = new RideBuilder().build();
     private status = BookingStatus.PENDING;
+    private price = 12.5;
     private driverId: string | undefined;
 
     withId(id: string): this {
@@ -35,12 +36,18 @@ export class BookingBuilder {
         return this;
     }
 
+    withPrice(price: number): this {
+        this.price = price;
+        return this;
+    }
+
     build(): Booking {
         return new Booking({
             id: this.id,
             riderId: this.riderId,
             ride: this.ride,
             status: this.status,
+            price: this.price,
             driverId: this.driverId,
         });
     }
