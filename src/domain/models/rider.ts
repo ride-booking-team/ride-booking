@@ -1,4 +1,6 @@
 import type { Booking } from "./booking.js";
+import { InsufficientFundsError } from "../errors/insufficient-funds-error.js";
+import { PendingBookingError } from "../errors/pending-booking-error.js";
 
 const MAX_BLOCKED_DRIVERS = 3;
 
@@ -22,12 +24,14 @@ export class Rider {
         return [...this.blockedDriverIdsValue];
     }
 
-    canBook(price: number, bookings: Booking[]): boolean {
+    ensureCanBook(price: number, bookings: Booking[]): void {
         if (this.balanceValue < price) {
-            return false;
+            throw new InsufficientFundsError(this.id, price);
         }
 
-        return !bookings.some((booking) => booking.isWaitingForDriver());
+        if (bookings.some((booking) => booking.isWaitingForDriver())) {
+            throw new PendingBookingError(this.id);
+        }
     }
 
     isBirthday(today: Date): boolean {

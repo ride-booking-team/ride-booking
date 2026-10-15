@@ -6,6 +6,7 @@ import type { PriceQuoteRepository } from "../../domain/ports/price-quote.reposi
 import type { RiderRepository } from "../../domain/ports/rider.repository.js";
 import type { RouteScanner } from "../../domain/ports/route.scanner.js";
 import type { CalculatePriceUsecase } from "./calculate-price.usecase.js";
+import { RiderNotFoundError } from "../../domain/errors/rider-not-found-error.js";
 
 export type EstimatePriceParams = {
     riderId: string;
@@ -30,11 +31,11 @@ export class EstimatePriceUseCase {
         private readonly quoteRepository: PriceQuoteRepository,
     ) {}
 
-    async execute(params: EstimatePriceParams): Promise<Estimate | null> {
+    async execute(params: EstimatePriceParams): Promise<Estimate> {
         const rider = await this.riderRepository.findById(params.riderId);
 
         if (!rider) {
-            return null;
+            throw new RiderNotFoundError(params.riderId);
         }
 
         const route = await this.routeScanner.scan(params.from, params.to);

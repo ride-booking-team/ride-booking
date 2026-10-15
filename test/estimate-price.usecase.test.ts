@@ -7,6 +7,7 @@ import { StubDateProvider } from "./stub-date.provider.js";
 import { StubIDGenerator } from "./stub-id-generator.provider.js";
 import { RiderBuilder } from "./builders/rider.builder.js";
 import { InMemoryPriceQuoteRepository } from "../src/infra/in-memory-price-quote.repository.js";
+import { RiderNotFoundError } from "../src/domain/errors/rider-not-found-error.js";
 
 describe("EstimatePriceUseCase", () => {
     let estimatePrice: EstimatePriceUseCase;
@@ -73,8 +74,8 @@ describe("EstimatePriceUseCase", () => {
     });
 
     it("should not estimate for an unknown rider", async () => {
-        const estimate = await estimatePrice.execute({ riderId: "unknown", from: FROM, to: TO });
-
-        expect(estimate).toBeNull();
+        await expect(
+            estimatePrice.execute({ riderId: "unknown", from: FROM, to: TO }),
+        ).rejects.toThrow(RiderNotFoundError);
     });
 });

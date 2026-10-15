@@ -4,8 +4,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "tsx src/server.ts",
+    "db:dev": "docker compose -f setup-integration-tests/docker-compose-postgresql-dev.yaml up -d",
     "test": "vitest",
     "test:integration": "vitest --config setup-integration-tests/vitest-integration.config.js",
+    "test:e2e": "vitest --config setup-e2e-tests/vitest-e2e.config.js",
     "knex": "node --import tsx ./node_modules/knex/bin/cli.js --knexfile setup-integration-tests/knexfile.ts"
   },
   "keywords": [],
@@ -13,7 +16,10 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^26.6.5",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.1",
     "testcontainers": "^12.0.4",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
@@ -21,6 +27,7 @@
   },
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.2",
+    "express": "^5.3.0",
     "knex": "^3.3.0",
     "pg": "^8.23.1"
   }

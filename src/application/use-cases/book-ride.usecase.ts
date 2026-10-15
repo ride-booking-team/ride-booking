@@ -12,6 +12,7 @@ import { QuoteExpiredError } from "../../domain/errors/quote-expired-error.js";
 import { UnknownQuoteError } from "../../domain/errors/unknown-quote-error.js";
 import { QuoteAlreadyUsedError } from "../../domain/errors/quote-already-used-error.js";
 import type { PriceQuote } from "../../domain/models/price-quote.js";
+import { RiderNotFoundError } from "../../domain/errors/rider-not-found-error.js";
 
 export type BookRideParams =
     | { riderId: string; from: string; to: string; uberX?: boolean }
@@ -28,11 +29,11 @@ export class BookRideUseCase {
         private readonly dateProvider: DateProvider,
     ) {}
 
-    async execute(params: BookRideParams): Promise<{ id: string } | null> {
+    async execute(params: BookRideParams): Promise<{ id: string }> {
         const rider = await this.riderRepository.findById(params.riderId);
 
         if (!rider) {
-            return null;
+            throw new RiderNotFoundError(params.riderId);
         }
 
         let ride: Ride;
@@ -74,9 +75,8 @@ export class BookRideUseCase {
         const existingBookings =
             await this.bookingRepository.findByRiderId(rider.id);
 
-        if (!rider.canBook(price, existingBookings)) {
-            return null;
-        }
+        rider.ensureCanBook(price, existingBookings);
+
         const booking = new Booking({
             id: this.idGenerator.generate(),
             riderId: rider.id,

@@ -1,5 +1,6 @@
 import type { Ride } from "./ride.js";
 import { BookingStatus } from "../value-objects/booking-status.js";
+import { BookingAlreadyCancelledError } from "../errors/booking-already-cancelled-error.js";
 
 const PENALTY_WHEN_DRIVER_ON_THE_WAY = 5;
 
@@ -60,7 +61,7 @@ export class Booking {
      */
     cancel({ riderBirthday }: { riderBirthday: boolean }): number {
         if (this.statusValue.equals(BookingStatus.CANCELLED)) {
-            throw new Error("booking already cancelled");
+            throw new BookingAlreadyCancelledError(this.id);
         }
 
         const penalty =
