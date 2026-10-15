@@ -10,6 +10,7 @@ import { BookingStatus } from "../../domain/value-objects/booking-status.js";
 export type BookRideParams = {
     riderId: string;
     ride: Ride;
+    uberX?: boolean;
 };
 
 export class BookRideUseCase {
@@ -26,7 +27,10 @@ export class BookRideUseCase {
         if (!rider) {
             return null;
         }
-        const price = this.calculatePriceUsecase.execute(params.ride);
+        const price = this.calculatePriceUsecase.execute(params.ride, {
+            uberX: params.uberX ?? false,
+            rider,
+        });
 
         const existingBookings =
             await this.bookingRepository.findByRiderId(rider.id);
