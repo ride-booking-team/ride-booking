@@ -7,6 +7,7 @@ import type { ListRideHistoryUseCase } from "../../application/use-cases/list-ri
 import { errorHandler } from "./error-handler.js";
 import { bookRideRoute } from "./routes/book-ride.route.js";
 import { cancelRideRoute } from "./routes/cancel-ride.route.js";
+import { listRideHistoryRoute } from "./routes/list-ride-history.route.js";
 
 /**
  * L'API ne connaît que les use cases :
@@ -26,6 +27,7 @@ export function createApp(deps: AppDependencies): Express {
 
     app.post("/rides/book", bookRideRoute(deps.bookRide));
     app.post("/rides/:bookingId/cancel", cancelRideRoute(deps.cancelRide));
+    app.get("/riders/:riderId/rides", listRideHistoryRoute(deps.listRideHistory));
 
     app.use((_request, response) => {
         response.status(404).json({ error: "route not found" });
