@@ -9,6 +9,7 @@ import { FakeBookingRepository } from "./fakes/fake-booking.repository.js";
 import { FakeRiderRepository } from "./fakes/fake-rider.repository.js";
 import { StubIDGenerator } from "./stub-id-generator.provider.js";
 import { BookingStatus } from "../src/domain/value-objects/booking-status.js";
+import { StubDateProvider } from "./stub-date.provider.js";
 
 describe("BookRideUseCase", () => {
     let calculatePriceUsecase: CalculatePriceUsecase;
@@ -16,9 +17,11 @@ describe("BookRideUseCase", () => {
     let fakeBookingRepository: FakeBookingRepository;
     let fakeRiderRepository: FakeRiderRepository;
     let idGenerator: StubIDGenerator;
+    let dateProvider: StubDateProvider
 
     beforeEach(() => {
-        calculatePriceUsecase = new CalculatePriceUsecase();
+        dateProvider = new StubDateProvider();
+        calculatePriceUsecase = new CalculatePriceUsecase(dateProvider);
         fakeBookingRepository = new FakeBookingRepository();
         fakeRiderRepository = new FakeRiderRepository();
         idGenerator = new StubIDGenerator();

@@ -1,6 +1,6 @@
 import type { Ride } from "../models/ride.js";
 
-export function calculateRidePrice(ride: Ride): number {
+export function calculateRidePrice(ride: Ride, at: Date): number {
     const { departure, destination, distanceKm } = ride;
 
     let basePrice = 1;
@@ -13,5 +13,19 @@ export function calculateRidePrice(ride: Ride): number {
         basePrice = 10;
     }
 
-    return basePrice + distanceKm * 0.5;
+    let price = basePrice + distanceKm * 0.5;
+
+    return isChristmasInParis(at) ? price * 2 : price;
+}
+
+export function isChristmasInParis(at: Date): boolean {
+    const parts = new Intl.DateTimeFormat("fr-FR", {
+        timeZone: "Europe/Paris",
+        day: "numeric",
+        month: "numeric",
+    }).formatToParts(at);
+
+    const get = (type: string) => parts.find((p) => p.type === type)?.value;
+
+    return get("day") === "25" && get("month") === "12";
 }
