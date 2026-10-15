@@ -4,6 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "tsx src/server.ts",
+    "db:dev": "docker compose -f setup-integration-tests/docker-compose-postgresql-dev.yaml up -d",
     "test": "vitest",
     "test:integration": "vitest --config setup-integration-tests/vitest-integration.config.js",
     "test:e2e": "vitest --config setup-e2e-tests/vitest-e2e.config.js",

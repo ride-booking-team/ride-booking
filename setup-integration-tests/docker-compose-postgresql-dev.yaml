@@ -1,0 +1,17 @@
+# Base de développement pour `npm start`.
+# Port 5434 : le 5433 est réservé aux tests d'intégration et e2e.
+services:
+  postgres:
+    image: 'postgres:13.2'
+    container_name: ride-booking-dev-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ride_booking
+    volumes:
+      - ride-booking-dev-data:/var/lib/postgresql/data
+
+volumes:
+  ride-booking-dev-data:

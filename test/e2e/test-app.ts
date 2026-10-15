@@ -7,15 +7,7 @@ import {
     stopDockerPostgresql,
 } from "../../setup-integration-tests/docker-postgresql-manager.js";
 
-import { createApp } from "../../src/infra/http/app.js";
-import { BookRideUseCase } from "../../src/application/use-cases/book-ride.usecase.js";
-import { CalculatePriceUsecase } from "../../src/application/use-cases/calculate-price.usecase.js";
-import { CancelRideUseCase } from "../../src/application/use-cases/cancel-ride.usecase.js";
-import { EstimatePriceUseCase } from "../../src/application/use-cases/estimate-price.usecase.js";
-import { ListRideHistoryUseCase } from "../../src/application/use-cases/list-ride-history.usecase.js";
-import { KnexBookingRepository } from "../../src/infra/knex-booking.repository.js";
-import { KnexDriverRepository } from "../../src/infra/knex-driver.repository.js";
-import { KnexRiderRepository } from "../../src/infra/knex-rider.repository.js";
+import { buildApp } from "../../src/infra/http/build-app.js";
 import { InMemoryPriceQuoteRepository } from "../../src/infra/in-memory-price-quote.repository.js";
 import { CryptoIdGenerator } from "../../src/infra/crypto-id-generator.provider.js";
 import { FakeRouteScanner } from "../fakes/fake-route-scanner.js";
@@ -38,23 +30,13 @@ export async function startTestApp(): Promise<TestApp> {
     const connection = knex(knexConfig.test);
     const routeScanner = new FakeRouteScanner();
     const dateProvider = new StubDateProvider();
-    const idGenerator = new CryptoIdGenerator();
 
-    const riders = new KnexRiderRepository(connection);
-    const bookings = new KnexBookingRepository(connection);
-    const drivers = new KnexDriverRepository(connection);
-    const quotes = new InMemoryPriceQuoteRepository();
-    const calculatePrice = new CalculatePriceUsecase(dateProvider);
-
-    const app = createApp({
-        bookRide: new BookRideUseCase(
-            calculatePrice, idGenerator, bookings, riders, routeScanner, quotes, dateProvider,
-        ),
-        cancelRide: new CancelRideUseCase(bookings, dateProvider, riders),
-        listRideHistory: new ListRideHistoryUseCase(bookings, drivers),
-        estimatePrice: new EstimatePriceUseCase(
-            calculatePrice, idGenerator, riders, routeScanner, dateProvider, quotes,
-        ),
+    const app = buildApp({
+        knex: connection,
+        routeScanner,
+        dateProvider,
+        idGenerator: new CryptoIdGenerator(),
+        quoteRepository: new InMemoryPriceQuoteRepository(),
     });
 
     return { app, knex: connection, routeScanner, dateProvider };
