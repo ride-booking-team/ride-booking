@@ -1,4 +1,5 @@
 import { AddressNotFoundError } from "../domain/errors/address-not-found-error.js";
+import { RouteNotFoundError } from "../domain/errors/route-not-found-error.js";
 import type { RouteScanner, ScannedRoute } from "../domain/ports/route.scanner.js";
 
 export interface GoogleMapsClient {
@@ -23,11 +24,11 @@ export class GoogleMapsRouteScanner implements RouteScanner {
     ) {}
 
     async scan(from: string, to: string): Promise<ScannedRoute> {
-        const [departureCity, destinationCity, distanceKm] = await Promise.all([
+        const [departureCity, destinationCity] = await Promise.all([
             this.cityOf(from),
             this.cityOf(to),
-            this.distanceKmBetween(from, to),
         ]);
+        const distanceKm = await this.distanceKmBetween(from, to);
 
         return { departureCity, destinationCity, distanceKm };
     }
@@ -56,7 +57,7 @@ export class GoogleMapsRouteScanner implements RouteScanner {
         const meters = data.rows[0]?.elements[0]?.distance?.value;
 
         if (meters === undefined) {
-            throw new AddressNotFoundError(`${from} -> ${to}`);
+            throw new RouteNotFoundError(from, to);
         }
 
         return meters / 1000;

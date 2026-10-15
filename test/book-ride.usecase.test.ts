@@ -2,7 +2,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { BookingBuilder } from "./builders/booking.builder.js";
 import { RiderBuilder } from "./builders/rider.builder.js";
-import { RideBuilder } from "./builders/ride.builder.js";
 import { CalculatePriceUsecase } from "../src/application/use-cases/calculate-price.usecase.js";
 import { BookRideUseCase } from "../src/application/use-cases/book-ride.usecase.js";
 import { FakeBookingRepository } from "./fakes/fake-booking.repository.js";
@@ -198,7 +197,7 @@ describe("BookRideUseCase", () => {
 
         const result = await bookRideUseCase.execute({
             riderId: rider.id,
-            ...aRouteInParis(),
+            ...aRouteInParis(10),
             uberX: true,
         });
 
@@ -214,7 +213,7 @@ describe("BookRideUseCase", () => {
 
         const result = await bookRideUseCase.execute({
             riderId: rider.id,
-            ...aRouteInParis(),
+            ...aRouteInParis(10),
             uberX: true,
         });
 
