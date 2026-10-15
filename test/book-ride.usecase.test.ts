@@ -15,6 +15,7 @@ import { AddressNotFoundError } from "../src/domain/errors/address-not-found-err
 import { FakePriceQuoteRepository } from "./fakes/fake-price-quote.repository.js";
 import { PriceQuote } from "../src/domain/models/price-quote.js";
 import { QuoteExpiredError } from "../src/domain/errors/quote-expired-error.js";
+import { UnknownQuoteError } from "../src/domain/errors/unknown-quote-error.js";
 
 describe("BookRideUseCase", () => {
     let calculatePriceUsecase: CalculatePriceUsecase;
@@ -322,6 +323,15 @@ describe("BookRideUseCase", () => {
         ).rejects.toThrow(QuoteExpiredError);
 
         expect(await fakeBookingRepository.findByRiderId(rider.id)).toEqual([]);
+    });
+
+    it("should not book with an unknown token", async () => {
+        const rider = new RiderBuilder().withBalance(100).build();
+        await fakeRiderRepository.save(rider);
+
+        await expect(
+            bookRideUseCase.execute({ riderId: rider.id, token: "unknown-token" }),
+        ).rejects.toThrow(UnknownQuoteError);
     });
 
 });

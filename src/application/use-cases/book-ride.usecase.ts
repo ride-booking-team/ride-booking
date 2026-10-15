@@ -10,6 +10,7 @@ import type { RouteScanner } from "../../domain/ports/route.scanner.js";
 import type { PriceQuoteRepository } from "../../domain/ports/price-quote.repository.js";
 import type { DateProvider } from "../../domain/ports/date.provider.js";
 import { QuoteExpiredError } from "../../domain/errors/quote-expired-error.js";
+import { UnknownQuoteError } from "../../domain/errors/unknown-quote-error.js";
 
 export type BookRideParams =
     | { riderId: string; from: string; to: string; uberX?: boolean }
@@ -41,7 +42,7 @@ export class BookRideUseCase {
             const quote = await this.quoteRepository.findByToken(params.token);
 
             if (!quote) {
-                return null;
+                throw new UnknownQuoteError(params.token);
             }
 
             if (quote.isExpired(this.dateProvider.now())) {
