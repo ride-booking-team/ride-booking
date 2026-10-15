@@ -4,6 +4,8 @@ import type { BookRideUseCase } from "../../application/use-cases/book-ride.usec
 import type { CancelRideUseCase } from "../../application/use-cases/cancel-ride.usecase.js";
 import type { EstimatePriceUseCase } from "../../application/use-cases/estimate-price.usecase.js";
 import type { ListRideHistoryUseCase } from "../../application/use-cases/list-ride-history.usecase.js";
+import { errorHandler } from "./error-handler.js";
+import { bookRideRoute } from "./routes/book-ride.route.js";
 
 /**
  * L'API ne connaît que les use cases :
@@ -21,9 +23,13 @@ export function createApp(deps: AppDependencies): Express {
 
     app.use(express.json());
 
+    app.post("/rides/book", bookRideRoute(deps.bookRide));
+
     app.use((_request, response) => {
         response.status(404).json({ error: "route not found" });
     });
+
+    app.use(errorHandler);
 
     return app;
 }
