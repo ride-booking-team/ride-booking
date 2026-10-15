@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { CalculatePriceUsecase } from "../src/application/use-cases/calculate-price.usecase.js";
 import { StubDateProvider } from "./stub-date.provider.js";
+import { RiderBuilder } from "./builders/rider.builder.js";
 
 describe("CalculatePriceUsecase", () => {
     let calculPriceUsecase: CalculatePriceUsecase;
@@ -93,4 +94,29 @@ describe("CalculatePriceUsecase", () => {
               })
           ).toBe(7);
       });
+
+       it("should offer the UberX supplement on the rider's birthday, even on Christmas day", () => {
+          const parisToParis10km = {
+            id: "ride-1",
+            departure: "Paris",
+            destination: "Paris",
+            distanceKm: 10,
+          };
+          dateProvider.date = new Date("2026-12-25T15:00:00Z");
+          const rider = new RiderBuilder().withBirthDate(new Date("2000-12-25")).build();
+
+          expect(calculPriceUsecase.execute(parisToParis10km, { uberX: true, rider })).toBe(14);
+      });
+
+      it("should add 5 euros to an UberX ride leaving Paris", () => {
+          const rider = new RiderBuilder().withBirthDate(new Date("2000-01-01")).build();
+
+          expect(
+              calculPriceUsecase.execute(
+                  { id: "ride-1", departure: "Paris", destination: "Lyon", distanceKm: 20 },
+                  { uberX: true, rider },
+              )
+          ).toBe(25);
+      });
+
 });

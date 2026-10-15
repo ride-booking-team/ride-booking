@@ -165,4 +165,37 @@ describe("BookRideUseCase", () => {
 
         expect(result).toEqual({ id: "booking-1" });
     });
+
+    it("should reject an UberX ride the rider cannot afford", async () => {
+          const rider = new RiderBuilder()
+              .withBalance(10)
+              .withBirthDate(new Date("2000-01-01"))
+              .build();
+          await fakeRiderRepository.save(rider);
+
+          const result = await bookRideUseCase.execute({
+              riderId: rider.id,
+              ride: new RideBuilder().withDistance(10).build(),   
+              uberX: true,
+          });
+
+          expect(result).toBeNull();
+      });
+
+      it("should accept the same UberX ride on the rider's birthday", async () => {
+          const rider = new RiderBuilder()
+              .withBalance(10)
+              .withBirthDate(new Date("2000-10-14"))  
+              .build();
+          await fakeRiderRepository.save(rider);
+
+          const result = await bookRideUseCase.execute({
+              riderId: rider.id,
+              ride: new RideBuilder().withDistance(10).build(),  
+              uberX: true,
+          });
+
+          expect(result).not.toBeNull();
+      });
+
 });

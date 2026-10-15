@@ -1,6 +1,17 @@
 import type { Ride } from "../models/ride.js";
 
-export function calculateRidePrice(ride: Ride, at: Date): number {
+const UBERX_SUPPLEMENT = 5;
+
+export type PricingOptions = {
+    uberX: boolean;
+    riderBirthday: boolean;
+};
+
+export function calculateRidePrice(
+    ride: Ride,
+    at: Date,
+    { uberX, riderBirthday }: PricingOptions = { uberX: false, riderBirthday: false },
+): number {
     const { departure, destination, distanceKm } = ride;
 
     let basePrice = 1;
@@ -13,9 +24,11 @@ export function calculateRidePrice(ride: Ride, at: Date): number {
         basePrice = 10;
     }
 
-    let price = basePrice + distanceKm * 0.5;
+    const ridePrice = basePrice + distanceKm * 0.5;
+    const priceWithChristmas = isChristmasInParis(at) ? ridePrice * 2 : ridePrice;
 
-    return isChristmasInParis(at) ? price * 2 : price;
+    const supplement = uberX && !riderBirthday ? UBERX_SUPPLEMENT : 0;
+    return priceWithChristmas + supplement;
 }
 
 export function isChristmasInParis(at: Date): boolean {
