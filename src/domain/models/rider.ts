@@ -12,8 +12,17 @@ export class Rider {
         private balanceValue: number,
         readonly birthDate: Date,
         blockedDriverIds: ReadonlyArray<string> = [],
+        private loyaltyPointsValue: number = 0,
     ) {
         this.blockedDriverIdsValue = [...blockedDriverIds];
+    }
+
+    get loyaltyPoints(): number {
+        return this.loyaltyPointsValue;
+    }
+
+    earnLoyaltyPoints(): void {
+        this.loyaltyPointsValue += 1;
     }
 
     get balance(): number {

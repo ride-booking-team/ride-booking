@@ -136,6 +136,7 @@ describe("BookRideUseCase", () => {
             ...aRouteInParis(),
         });
 
+
         expect(result).not.toBeNull();
 
         const savedBookings =
@@ -149,6 +150,17 @@ describe("BookRideUseCase", () => {
             status: BookingStatus.PENDING,
         });
     });
+
+
+    it("should give the rider a loyalty point for the booked ride", async () => {
+        const rider = new RiderBuilder().withLoyaltyPoints(4).build();
+        await fakeRiderRepository.save(rider);
+
+        await bookRideUseCase.execute({riderId: rider.id, ...aRouteInParis()});
+
+        const saveRider = await fakeRiderRepository.findById(rider.id);
+        expect(saveRider?.loyaltyPoints).toBe(5);
+    })
 
     it("should reject another booking when no driver is assigned", async () => {
         const rider = new RiderBuilder().build();

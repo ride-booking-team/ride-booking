@@ -17,6 +17,7 @@ export class FakeRiderRepository implements RiderRepository {
             rider.balance,
             rider.birthDate,
             rider.blockedDriverIds,
+            rider.loyaltyPoints,
         );
     }
 
@@ -28,6 +29,7 @@ export class FakeRiderRepository implements RiderRepository {
             rider.balance,
             rider.birthDate,
             rider.blockedDriverIds,
+            rider.loyaltyPoints,
         );
 
         if (index === -1) {

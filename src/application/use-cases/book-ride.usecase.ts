@@ -86,6 +86,8 @@ export class BookRideUseCase {
         });
 
         await this.bookingRepository.save(booking);
+        rider.earnLoyaltyPoints();
+        await this.riderRepository.save(rider);
 
         if (quote) {
             quote.markAsUsed();
