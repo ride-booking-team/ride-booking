@@ -1,6 +1,7 @@
 import type { Knex } from "knex";
 
-import type { Booking, BookingStatus } from "../domain/models/booking.js";
+import type { Booking } from "../domain/models/booking.js";
+import { BookingStatus } from "../domain/value-objects/booking-status.js";
 import type { BookingRepository } from "../domain/ports/booking.repository.js";
 
 type BookingRow = {
@@ -8,7 +9,7 @@ type BookingRow = {
     rider_id: string;
     ride_id: string;
     driver_id: string | null;
-    status: BookingStatus;
+    status: string;
     departure: string;
     destination: string;
     distance_km: number | string;
@@ -37,7 +38,7 @@ export class KnexBookingRepository implements BookingRepository {
                     rider_id: booking.riderId,
                     ride_id: booking.ride.id,
                     driver_id: booking.driverId ?? null,
-                    status: booking.status,
+                    status: booking.status.toString(),
                     departure: booking.ride.departure,
                     destination: booking.ride.destination,
                     distance_km: booking.ride.distanceKm,
@@ -67,7 +68,7 @@ export class KnexBookingRepository implements BookingRepository {
         return {
             id: row.id,
             riderId: row.rider_id,
-            status: row.status,
+            status: BookingStatus.of(row.status),
             ...(row.driver_id !== null
                 ? { driverId: row.driver_id }
                 : {}),

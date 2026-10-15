@@ -1,4 +1,5 @@
-import type {Booking, BookingStatus} from "../../src/domain/models/booking.js";
+import type { Booking } from "../../src/domain/models/booking.js";
+import { BookingStatus } from "../../src/domain/value-objects/booking-status.js";
 import { RideBuilder } from "./ride.builder.js";
 
 export class BookingBuilder {
@@ -6,7 +7,7 @@ export class BookingBuilder {
         id: "",
         riderId: "rider-1",
         ride: new RideBuilder().build(),
-        status: "pending",
+        status: BookingStatus.PENDING,
     };
 
     withId(id: string): this {
@@ -24,8 +25,8 @@ export class BookingBuilder {
         return this;
     }
 
-    withStatus(status: BookingStatus) {
-        this.booking.status = status;
+    withStatus(status: string) {
+        this.booking.status = BookingStatus.of(status);
         return this;
     }
 

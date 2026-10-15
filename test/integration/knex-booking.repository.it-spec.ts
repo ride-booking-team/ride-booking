@@ -10,6 +10,7 @@ import {
 
 import { KnexBookingRepository } from "../../src/infra/knex-booking.repository.js";
 import type { Booking } from "../../src/domain/models/booking.js";
+import { BookingStatus } from "../../src/domain/value-objects/booking-status.js";
 
 describe("KnexBookingRepository", () => {
     let sqlConnection: Knex;
@@ -35,7 +36,7 @@ describe("KnexBookingRepository", () => {
         const booking: Booking = {
             id: "booking-1",
             riderId: "rider-1",
-            status: "pending",
+            status: BookingStatus.PENDING,
             ride: {
                 id: "ride-1",
                 departure: "Paris",
@@ -75,7 +76,7 @@ describe("KnexBookingRepository", () => {
         const booking: Booking = {
             id: "booking-1",
             riderId: "rider-1",
-            status: "pending",
+            status: BookingStatus.PENDING,
             ride: {
                 id: "ride-1",
                 departure: "Paris",
@@ -106,7 +107,7 @@ describe("KnexBookingRepository", () => {
             id: "booking-1",
             riderId: "rider-1",
             driverId: "driver-1",
-            status: "assigned",
+            status: BookingStatus.ASSIGNED,
             ride: {
                 id: "ride-1",
                 departure: "Paris",
@@ -133,7 +134,7 @@ describe("KnexBookingRepository", () => {
             id: "booking-1",
             riderId: "rider-1",
             driverId: "unknown-driver",
-            status: "assigned",
+            status: BookingStatus.ASSIGNED,
             ride: {
                 id: "ride-1",
                 departure: "Paris",
@@ -143,6 +144,33 @@ describe("KnexBookingRepository", () => {
         };
 
         await expect(repository.save(booking)).rejects.toThrow();
+    });
+
+    it("should refuse to read a booking with an invalid status", async () => {
+        await sqlConnection("riders").insert({
+            id: "rider-1",
+            balance: 100,
+            birth_date: new Date("2000-01-01"),
+        });
+        await sqlConnection("rides").insert({
+            id: "ride-1",
+            departure: "Paris",
+            destination: "Lyon",
+            distance_km: 460,
+        });
+        await sqlConnection("bookings").insert({
+            id: "booking-1",
+            rider_id: "rider-1",
+            ride_id: "ride-1",
+            status: "toto",
+            departure: "Paris",
+            destination: "Lyon",
+            distance_km: 460,
+        });
+
+        await expect(repository.findById("booking-1")).rejects.toThrow(
+            /invalid booking status/,
+        );
     });
 
     it("should return null when booking does not exist", async () => {

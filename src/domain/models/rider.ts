@@ -1,4 +1,5 @@
 import type { Booking } from "./booking.js";
+import { BookingStatus } from "../value-objects/booking-status.js";
 
 export class Rider {
     constructor(
@@ -14,7 +15,7 @@ export class Rider {
 
         return !bookings.some(
             (booking) =>
-                booking.status === "pending" && !booking.driverId,
+                booking.status.equals(BookingStatus.PENDING) && !booking.driverId,
         );
     }
 }

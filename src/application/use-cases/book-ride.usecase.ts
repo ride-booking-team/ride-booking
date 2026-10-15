@@ -5,6 +5,7 @@ import type { IDGenerator } from "../../domain/ports/id-generator.provider.js";
 import type { Ride } from "../../domain/models/ride.js";
 import type { Rider } from "../../domain/models/rider.js";
 import type {RiderRepository} from "../../domain/ports/rider.repository.js";
+import { BookingStatus } from "../../domain/value-objects/booking-status.js";
 
 export type BookRideParams = {
     riderId: string;
@@ -37,7 +38,7 @@ export class BookRideUseCase {
             id: this.idGenerator.generate(),
             riderId: rider.id,
             ride: params.ride,
-           status:"pending"
+            status: BookingStatus.PENDING,
         };
 
         await this.bookingRepository.save(booking);
