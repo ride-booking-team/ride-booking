@@ -6,10 +6,12 @@ import type { Ride } from "../../domain/models/ride.js";
 import type { Rider } from "../../domain/models/rider.js";
 import type {RiderRepository} from "../../domain/ports/rider.repository.js";
 import { BookingStatus } from "../../domain/value-objects/booking-status.js";
+import type { RouteScanner } from "../../domain/ports/route.scanner.js";
 
 export type BookRideParams = {
     riderId: string;
-    ride: Ride;
+    from: string;
+    to: string;
     uberX?: boolean;
 };
 
@@ -19,6 +21,7 @@ export class BookRideUseCase {
         private readonly idGenerator: IDGenerator,
         private readonly bookingRepository: BookingRepository,
         private readonly riderRepository: RiderRepository,
+        private readonly routeScanner: RouteScanner,
     ) {}
 
     async execute(params: BookRideParams): Promise<{ id: string } | null> {
@@ -27,7 +30,16 @@ export class BookRideUseCase {
         if (!rider) {
             return null;
         }
-        const price = this.calculatePriceUsecase.execute(params.ride, {
+
+        const route = await this.routeScanner.scan(params.from, params.to);
+        const ride: Ride = {
+            id: this.idGenerator.generate(),
+            departure: route.departureCity,
+            destination: route.destinationCity,
+            distanceKm: route.distanceKm,
+        }
+
+        const price = this.calculatePriceUsecase.execute(ride, {
             uberX: params.uberX ?? false,
             rider,
         });
@@ -41,7 +53,7 @@ export class BookRideUseCase {
         const booking = new Booking({
             id: this.idGenerator.generate(),
             riderId: rider.id,
-            ride: params.ride,
+            ride,
             status: BookingStatus.PENDING,
         });
 

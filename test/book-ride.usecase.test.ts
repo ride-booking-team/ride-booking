@@ -10,6 +10,7 @@ import { FakeRiderRepository } from "./fakes/fake-rider.repository.js";
 import { StubIDGenerator } from "./stub-id-generator.provider.js";
 import { BookingStatus } from "../src/domain/value-objects/booking-status.js";
 import { StubDateProvider } from "./stub-date.provider.js";
+import { FakeRouteScanner } from "./fakes/fake-route-scanner.js";
 
 describe("BookRideUseCase", () => {
     let calculatePriceUsecase: CalculatePriceUsecase;
@@ -17,13 +18,15 @@ describe("BookRideUseCase", () => {
     let fakeBookingRepository: FakeBookingRepository;
     let fakeRiderRepository: FakeRiderRepository;
     let idGenerator: StubIDGenerator;
-    let dateProvider: StubDateProvider
+    let dateProvider: StubDateProvider;
+    let fakeRouteScanner: FakeRouteScanner;
 
     beforeEach(() => {
         dateProvider = new StubDateProvider();
         calculatePriceUsecase = new CalculatePriceUsecase(dateProvider);
         fakeBookingRepository = new FakeBookingRepository();
         fakeRiderRepository = new FakeRiderRepository();
+        fakeRouteScanner = new FakeRouteScanner();
         idGenerator = new StubIDGenerator();
 
         bookRideUseCase = new BookRideUseCase(
@@ -31,32 +34,44 @@ describe("BookRideUseCase", () => {
             idGenerator,
             fakeBookingRepository,
             fakeRiderRepository,
+            fakeRouteScanner,
         );
     });
 
+    const FROM = "10 rue de Rivoli";
+    const TO = "5 avenue Foch";
+
+    function aRouteInParis(distanceKm = 10): {from: string, to: string} {
+        fakeRouteScanner.withRoute(FROM, TO, {
+            departureCity: "Paris",
+            destinationCity: "Paris",
+            distanceKm,
+          });
+
+        return {from: FROM, to: TO};
+    };
+
     it("should reject a ride when the rider has insufficient balance", async () => {
         const rider = new RiderBuilder().withBalance(1).build();
-        const ride = new RideBuilder().build();
 
         await fakeRiderRepository.save(rider);
 
         const result = await bookRideUseCase.execute({
             riderId: rider.id,
-            ride,
+            ...aRouteInParis(),
         });
 
         expect(result).toBeNull();
     });
 
     it("should create a booking when the rider has sufficient balance", async () => {
-        const rider = new RiderBuilder().withBalance(10).build();
-        const ride = new RideBuilder().build();
+        const rider = new RiderBuilder().withBalance(15).build();
 
         await fakeRiderRepository.save(rider);
 
         const result = await bookRideUseCase.execute({
             riderId: rider.id,
-            ride,
+            ...aRouteInParis(),
         });
 
         expect(result).not.toBeNull();
@@ -71,7 +86,7 @@ describe("BookRideUseCase", () => {
 
         const result = await bookRideUseCase.execute({
             riderId: rider.id,
-            ride,
+            ...aRouteInParis(),
         });
 
         expect(result).toEqual({ id: "booking-1" });
@@ -91,7 +106,7 @@ describe("BookRideUseCase", () => {
 
         const result = await bookRideUseCase.execute({
             riderId: rider.id,
-            ride: new RideBuilder().build(),
+            ...aRouteInParis(),
         });
 
         expect(result).toBeNull();
@@ -99,14 +114,13 @@ describe("BookRideUseCase", () => {
 
     it("should save the newly created booking", async () => {
         const rider = new RiderBuilder().build();
-        const ride = new RideBuilder().build();
 
         await fakeRiderRepository.save(rider);
         idGenerator.id = "booking-1";
 
         const result = await bookRideUseCase.execute({
             riderId: rider.id,
-            ride,
+            ...aRouteInParis(),
         });
 
         expect(result).not.toBeNull();
@@ -118,7 +132,7 @@ describe("BookRideUseCase", () => {
         expect(savedBookings[0]).toMatchObject({
             id: result!.id,
             riderId: rider.id,
-            ride,
+            ride: { departure: "Paris", destination: "Paris", distanceKm: 10 },
             status: BookingStatus.PENDING,
         });
     });
@@ -137,7 +151,7 @@ describe("BookRideUseCase", () => {
 
         const result = await bookRideUseCase.execute({
             riderId: rider.id,
-            ride: new RideBuilder().build(),
+            ...aRouteInParis(),
         });
 
         expect(result).toBeNull();
@@ -160,7 +174,7 @@ describe("BookRideUseCase", () => {
 
         const result = await bookRideUseCase.execute({
             riderId: rider.id,
-            ride: new RideBuilder().build(),
+            ...aRouteInParis(),
         });
 
         expect(result).toEqual({ id: "booking-1" });
@@ -175,7 +189,7 @@ describe("BookRideUseCase", () => {
 
           const result = await bookRideUseCase.execute({
               riderId: rider.id,
-              ride: new RideBuilder().withDistance(10).build(),   
+              ...aRouteInParis(),   
               uberX: true,
           });
 
@@ -191,11 +205,31 @@ describe("BookRideUseCase", () => {
 
           const result = await bookRideUseCase.execute({
               riderId: rider.id,
-              ride: new RideBuilder().withDistance(10).build(),  
+              ...aRouteInParis(),
               uberX: true,
           });
 
           expect(result).not.toBeNull();
+      });
+
+      it("should price the ride with the distance and cities given by the scanner", async () => {
+          fakeRouteScanner.withRoute("10 rue de la rivoli", "5 avenue Foch", {
+            departureCity: "Paris",
+            destinationCity: "Paris",
+            distanceKm: 10,
+          });
+
+          const rider = new RiderBuilder().withBalance(7).build();
+          await fakeRiderRepository.save(rider);
+          idGenerator.id = "booking-1";
+
+          const result = await bookRideUseCase.execute({
+            riderId: rider.id,
+            from: "10 rue de la rivoli",
+            to: "5 avenue Foch",
+          });
+
+          expect(result).toEqual({ id: "booking-1"});
       });
 
 });
