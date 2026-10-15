@@ -1,5 +1,5 @@
-import { Client } from "@googlemaps/google-maps-services-js";
 import type { RouteScanner } from "../domain/ports/route.scanner.js";
+import { GoogleMapsHttpClient } from "./google-maps-http.client.js";
 import { GoogleMapsRouteScanner } from "./google-maps-route.scanner.js";
 
 export function createRouteScanner(
@@ -9,5 +9,5 @@ export function createRouteScanner(
         throw new Error("GOOGLE_MAPS_API_KEY is missing");
     }
 
-    return new GoogleMapsRouteScanner(new Client({}), apiKey);
+    return new GoogleMapsRouteScanner(new GoogleMapsHttpClient(), apiKey);
 }

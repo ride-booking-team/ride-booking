@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GoogleMapsRouteScanner } from "../src/infra/google-maps-route.scanner.js";
 import { StubGoogleMapsClient } from "./stub-google-maps.client.js";
 import { AddressNotFoundError } from "../src/domain/errors/address-not-found-error.js";
+import { RouteNotFoundError } from "../src/domain/errors/route-not-found-error.js";
 
 describe("GoogleMapsRouteScanner", () => {
     let client: StubGoogleMapsClient;
@@ -54,8 +55,12 @@ describe("GoogleMapsRouteScanner", () => {
             .withAddress("10 rue de Rivoli", "Paris")
             .withAddress("Times Square", "New York");
 
-        await expect(scanner.scan("10 rue de Rivoli", "Times Square")).rejects.toThrow(
-            AddressNotFoundError,
-        );
+        const scanning = scanner.scan("10 rue de Rivoli", "Times Square");
+
+        await expect(scanning).rejects.toThrow(RouteNotFoundError);
+        await expect(scanning).rejects.toMatchObject({
+            from: "10 rue de Rivoli",
+            to: "Times Square",
+        });
     });
 });

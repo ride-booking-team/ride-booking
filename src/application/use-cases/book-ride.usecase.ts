@@ -3,7 +3,6 @@ import type { BookingRepository } from "../../domain/ports/booking.repository.js
 import type { CalculatePriceUsecase } from "./calculate-price.usecase.js";
 import type { IDGenerator } from "../../domain/ports/id-generator.provider.js";
 import type { Ride } from "../../domain/models/ride.js";
-import type { Rider } from "../../domain/models/rider.js";
 import type {RiderRepository} from "../../domain/ports/rider.repository.js";
 import { BookingStatus } from "../../domain/value-objects/booking-status.js";
 import type { RouteScanner } from "../../domain/ports/route.scanner.js";
