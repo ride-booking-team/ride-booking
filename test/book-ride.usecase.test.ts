@@ -12,7 +12,7 @@ import { BookingStatus } from "../src/domain/value-objects/booking-status.js";
 import { StubDateProvider } from "./stub-date.provider.js";
 import { FakeRouteScanner } from "./fakes/fake-route-scanner.js";
 import { AddressNotFoundError } from "../src/domain/errors/address-not-found-error.js";
-import { FakePriceQuoteRepository } from "./fakes/fake-price-quote.repository.js";
+import { InMemoryPriceQuoteRepository } from "../src/infra/in-memory-price-quote.repository.js";
 import { PriceQuote } from "../src/domain/models/price-quote.js";
 import { QuoteExpiredError } from "../src/domain/errors/quote-expired-error.js";
 import { UnknownQuoteError } from "../src/domain/errors/unknown-quote-error.js";
@@ -26,7 +26,7 @@ describe("BookRideUseCase", () => {
     let idGenerator: StubIDGenerator;
     let dateProvider: StubDateProvider;
     let fakeRouteScanner: FakeRouteScanner;
-    let quoteRepository: FakePriceQuoteRepository;
+    let quoteRepository: InMemoryPriceQuoteRepository;
 
     beforeEach(() => {
         dateProvider = new StubDateProvider();
@@ -35,7 +35,7 @@ describe("BookRideUseCase", () => {
         fakeRiderRepository = new FakeRiderRepository();
         fakeRouteScanner = new FakeRouteScanner();
         idGenerator = new StubIDGenerator();
-        quoteRepository = new FakePriceQuoteRepository();
+        quoteRepository = new InMemoryPriceQuoteRepository();
 
         bookRideUseCase = new BookRideUseCase(
             calculatePriceUsecase,
@@ -302,6 +302,25 @@ describe("BookRideUseCase", () => {
         expect(result).toEqual({ id: "booking-1" }); // 7 € ≤ 8 € → réservé au prix garanti
         const [saved] = await fakeBookingRepository.findByRiderId(rider.id);
         expect(saved?.ride).toEqual({ id: "ride-1", departure: "Paris", destination: "Paris", distanceKm: 10 });
+    });
+
+    it("should keep the estimated price in the booking", async () => {
+        const rider = new RiderBuilder().withBalance(100).build();
+        await fakeRiderRepository.save(rider);
+
+        await quoteRepository.save(PriceQuote.create({
+            token: "token-1",
+            riderId: rider.id,
+            ride: { id: "ride-1", departure: "Paris", destination: "Paris", distanceKm: 10 },
+            uberX: true,
+            price: 19,
+            now: dateProvider.now(),
+        }));
+
+        await bookRideUseCase.execute({ riderId: rider.id, token: "token-1" });
+
+        const [saved] = await fakeBookingRepository.findByRiderId(rider.id);
+        expect(saved?.price).toBe(19);
     });
 
     it("should not book with an expired token", async () => {

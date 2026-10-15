@@ -1,7 +1,7 @@
-import { PriceQuote } from "../../src/domain/models/price-quote.js";
-import type { PriceQuoteRepository } from "../../src/domain/ports/price-quote.repository.js";
+import { PriceQuote } from "../domain/models/price-quote.js";
+import type { PriceQuoteRepository } from "../domain/ports/price-quote.repository.js";
 
-export class FakePriceQuoteRepository implements PriceQuoteRepository {
+export class InMemoryPriceQuoteRepository implements PriceQuoteRepository {
     private readonly quotes = new Map<string, PriceQuote>();
 
     async save(quote: PriceQuote): Promise<void> {
@@ -15,7 +15,7 @@ export class FakePriceQuoteRepository implements PriceQuoteRepository {
     }
 }
 
-// Comme une vraie base, le fake ne partage jamais ses objets.
+// Comme une vraie base, le repository ne partage jamais ses objets.
 function copy(quote: PriceQuote): PriceQuote {
     return new PriceQuote({
         token: quote.token,

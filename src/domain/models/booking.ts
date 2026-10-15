@@ -8,20 +8,23 @@ type BookingProps = {
     ride: Ride;
     riderId: string;
     status: BookingStatus;
+    price: number;
     driverId?: string | undefined;
 };
 
 export class Booking {
     readonly id: string;
     readonly riderId: string;
+    readonly price: number;
 
     private readonly rideValue: Ride;
     private statusValue: BookingStatus;
     private driverIdValue: string | undefined;
 
-    constructor({ id, ride, riderId, status, driverId }: BookingProps) {
+    constructor({ id, ride, riderId, status, price, driverId }: BookingProps) {
         this.id = id;
         this.riderId = riderId;
+        this.price = price;
         this.driverIdValue = driverId;
         this.rideValue = { ...ride };
         this.statusValue = status;

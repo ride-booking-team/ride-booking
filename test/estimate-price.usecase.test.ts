@@ -6,7 +6,7 @@ import { FakeRouteScanner } from "./fakes/fake-route-scanner.js";
 import { StubDateProvider } from "./stub-date.provider.js";
 import { StubIDGenerator } from "./stub-id-generator.provider.js";
 import { RiderBuilder } from "./builders/rider.builder.js";
-import { FakePriceQuoteRepository } from "./fakes/fake-price-quote.repository.js";
+import { InMemoryPriceQuoteRepository } from "../src/infra/in-memory-price-quote.repository.js";
 
 describe("EstimatePriceUseCase", () => {
     let estimatePrice: EstimatePriceUseCase;
@@ -14,7 +14,7 @@ describe("EstimatePriceUseCase", () => {
     let routeScanner: FakeRouteScanner;
     let dateProvider: StubDateProvider;
     let idGenerator: StubIDGenerator;
-    let quoteRepository: FakePriceQuoteRepository;
+    let quoteRepository: InMemoryPriceQuoteRepository;
 
     const FROM = "10 rue de Rivoli";
     const TO = "5 avenue Foch";
@@ -24,7 +24,7 @@ describe("EstimatePriceUseCase", () => {
         routeScanner = new FakeRouteScanner();
         dateProvider = new StubDateProvider();
         idGenerator = new StubIDGenerator();
-        quoteRepository = new FakePriceQuoteRepository();
+        quoteRepository = new InMemoryPriceQuoteRepository();
 
         estimatePrice = new EstimatePriceUseCase(
             new CalculatePriceUsecase(dateProvider),

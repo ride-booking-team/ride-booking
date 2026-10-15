@@ -37,6 +37,7 @@ function copy(booking: Booking): Booking {
         riderId: booking.riderId,
         ride: booking.ride,
         status: booking.status,
+        price: booking.price,
         driverId: booking.driverId,
     });
 }

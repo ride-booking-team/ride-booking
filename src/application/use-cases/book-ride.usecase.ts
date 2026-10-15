@@ -83,6 +83,7 @@ export class BookRideUseCase {
             riderId: rider.id,
             ride,
             status: BookingStatus.PENDING,
+            price,
         });
 
         await this.bookingRepository.save(booking);
