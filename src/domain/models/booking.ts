@@ -9,6 +9,7 @@ type BookingProps = {
     riderId: string;
     status: BookingStatus;
     driverId?: string | undefined;
+    createdAt: Date;
 };
 
 export class Booking {
