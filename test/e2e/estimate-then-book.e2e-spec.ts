@@ -10,6 +10,7 @@ const TO = "Place Bellecour";
 // Paris est en UTC+2 le 15 octobre.
 const AT_7_57_IN_PARIS = new Date("2026-10-15T05:57:00Z");
 const AT_8_01_IN_PARIS = new Date("2026-10-15T06:01:00Z");
+const FIVE_MINUTES_LATER = new Date("2026-10-15T06:02:00Z");
 
 describe("POST /rides/estimate then POST /rides/book with the token", () => {
     let testApp: TestApp;
@@ -44,8 +45,8 @@ describe("POST /rides/estimate then POST /rides/book with the token", () => {
         return response.body;
     }
 
-    function bookWith(token: string) {
-        return request(testApp.app).post("/rides/book").send({ riderId: "rider-1", token });
+    function bookWith(token: string, riderId = "rider-1") {
+        return request(testApp.app).post("/rides/book").send({ riderId, token });
     }
 
     async function savedBooking(id: string) {
@@ -82,5 +83,42 @@ describe("POST /rides/estimate then POST /rides/book with the token", () => {
 
         expect(response.status).toBe(201);
         expect(Number((await savedBooking(response.body.id)).price)).toBe(240);
+    });
+
+    it("should answer 404 for a token that was never given", async () => {
+        const response = await bookWith("made-up-token");
+
+        expect(response.status).toBe(404);
+        expect(response.body).toEqual({ error: "unknown price quote: made-up-token" });
+    });
+
+    it("should answer 410 once the 5 minutes are over", async () => {
+        const { token } = await anEstimate();
+        testApp.dateProvider.date = FIVE_MINUTES_LATER;
+
+        const response = await bookWith(token);
+
+        expect(response.status).toBe(410);
+        expect(response.body).toEqual({ error: `price quote expired: ${token}` });
+    });
+
+    it("should answer 409 for a token already used", async () => {
+        const { token } = await anEstimate();
+        await bookWith(token).expect(201);
+
+        const response = await bookWith(token);
+
+        expect(response.status).toBe(409);
+        expect(response.body).toEqual({ error: `price quote already used: ${token}` });
+    });
+
+    it("should answer 404 for the token of another rider, without revealing it exists", async () => {
+        const { token } = await anEstimate();
+        await testApp.knex("riders").insert({ id: "rider-2", balance: 1000, birth_date: "2000-01-01" });
+
+        const response = await bookWith(token, "rider-2");
+
+        expect(response.status).toBe(404);
+        expect(response.body).toEqual({ error: `unknown price quote: ${token}` });
     });
 });
