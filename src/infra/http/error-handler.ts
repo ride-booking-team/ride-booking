@@ -5,8 +5,11 @@ import { BookingAlreadyCancelledError } from "../../domain/errors/booking-alread
 import { BookingNotFoundError } from "../../domain/errors/booking-not-found-error.js";
 import { InsufficientFundsError } from "../../domain/errors/insufficient-funds-error.js";
 import { PendingBookingError } from "../../domain/errors/pending-booking-error.js";
+import { QuoteAlreadyUsedError } from "../../domain/errors/quote-already-used-error.js";
+import { QuoteExpiredError } from "../../domain/errors/quote-expired-error.js";
 import { RiderNotFoundError } from "../../domain/errors/rider-not-found-error.js";
 import { RouteNotFoundError } from "../../domain/errors/route-not-found-error.js";
+import { UnknownQuoteError } from "../../domain/errors/unknown-quote-error.js";
 
 type ErrorClass = new (...args: never[]) => Error;
 
@@ -22,6 +25,9 @@ const STATUS_BY_ERROR: ReadonlyArray<[ErrorClass, number]> = [
     [InsufficientFundsError, 402],
     [PendingBookingError, 409],
     [BookingAlreadyCancelledError, 409],
+    [UnknownQuoteError, 404],
+    [QuoteExpiredError, 410],
+    [QuoteAlreadyUsedError, 409],
 ];
 
 export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {

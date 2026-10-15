@@ -7,6 +7,7 @@ import type { ListRideHistoryUseCase } from "../../application/use-cases/list-ri
 import { errorHandler } from "./error-handler.js";
 import { bookRideRoute } from "./routes/book-ride.route.js";
 import { cancelRideRoute } from "./routes/cancel-ride.route.js";
+import { estimatePriceRoute } from "./routes/estimate-price.route.js";
 import { listRideHistoryRoute } from "./routes/list-ride-history.route.js";
 
 /**
@@ -25,6 +26,7 @@ export function createApp(deps: AppDependencies): Express {
 
     app.use(express.json());
 
+    app.post("/rides/estimate", estimatePriceRoute(deps.estimatePrice));
     app.post("/rides/book", bookRideRoute(deps.bookRide));
     app.post("/rides/:bookingId/cancel", cancelRideRoute(deps.cancelRide));
     app.get("/riders/:riderId/rides", listRideHistoryRoute(deps.listRideHistory));
