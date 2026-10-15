@@ -16,6 +16,7 @@ import { FakePriceQuoteRepository } from "./fakes/fake-price-quote.repository.js
 import { PriceQuote } from "../src/domain/models/price-quote.js";
 import { QuoteExpiredError } from "../src/domain/errors/quote-expired-error.js";
 import { UnknownQuoteError } from "../src/domain/errors/unknown-quote-error.js";
+import { QuoteAlreadyUsedError } from "../src/domain/errors/quote-already-used-error.js";
 
 describe("BookRideUseCase", () => {
     let calculatePriceUsecase: CalculatePriceUsecase;
@@ -332,6 +333,46 @@ describe("BookRideUseCase", () => {
         await expect(
             bookRideUseCase.execute({ riderId: rider.id, token: "unknown-token" }),
         ).rejects.toThrow(UnknownQuoteError);
+    });
+
+    it("should not book twice with the same token", async () => {
+        const rider = new RiderBuilder().withBalance(100).build();
+        await fakeRiderRepository.save(rider);
+
+        await quoteRepository.save(PriceQuote.create({
+            token: "token-1",
+            riderId: rider.id,
+            ride: { id: "ride-1", departure: "Paris", destination: "Paris", distanceKm: 10 },
+            uberX: false,
+            price: 7,
+            now: dateProvider.now(),
+        }));
+
+        await bookRideUseCase.execute({ riderId: rider.id, token: "token-1" });
+
+        await expect(
+            bookRideUseCase.execute({ riderId: rider.id, token: "token-1" }),
+        ).rejects.toThrow(QuoteAlreadyUsedError);
+    });
+
+    it("should not book with the token of another rider", async () => {
+        const otherRider = new RiderBuilder().withId("rider-2").withBalance(100).build();
+        await fakeRiderRepository.save(otherRider);
+
+        await quoteRepository.save(PriceQuote.create({
+            token: "token-1",
+            riderId: "rider-1",
+            ride: { id: "ride-1", departure: "Paris", destination: "Paris", distanceKm: 10 },
+            uberX: false,
+            price: 7,
+            now: dateProvider.now(),
+        }));
+
+        await expect(
+            bookRideUseCase.execute({ riderId: "rider-2", token: "token-1" }),
+        ).rejects.toThrow(UnknownQuoteError);
+
+        expect(await fakeBookingRepository.findByRiderId("rider-2")).toEqual([]);
     });
 
 });

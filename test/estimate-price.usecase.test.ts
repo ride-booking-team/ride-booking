@@ -71,4 +71,10 @@ describe("EstimatePriceUseCase", () => {
         });
         expect((await quoteRepository.findByToken("token-1"))?.price).toBe(7);
     });
+
+    it("should not estimate for an unknown rider", async () => {
+        const estimate = await estimatePrice.execute({ riderId: "unknown", from: FROM, to: TO });
+
+        expect(estimate).toBeNull();
+    });
 });

@@ -24,5 +24,6 @@ function copy(quote: PriceQuote): PriceQuote {
         uberX: quote.uberX,
         price: quote.price,
         expiresAt: quote.expiresAt,
+        used: quote.isUsed,
     });
 }

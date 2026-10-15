@@ -16,4 +16,21 @@ describe("PriceQuote", () => {
         expect(quote.isExpired(new Date("2026-10-15T10:04:59Z"))).toBe(false);
         expect(quote.isExpired(new Date("2026-10-15T10:05:00Z"))).toBe(true);
     });
+
+    it("can be marked as used", () => {
+        const quote = PriceQuote.create({
+            token: "token-1",
+            riderId: "rider-1",
+            ride: new RideBuilder().build(),
+            uberX: false,
+            price: 7,
+            now: new Date("2026-10-15T10:00:00Z"),
+        });
+
+        expect(quote.isUsed).toBe(false);
+
+        quote.markAsUsed();
+
+        expect(quote.isUsed).toBe(true);
+    });
 });

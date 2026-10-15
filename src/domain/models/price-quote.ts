@@ -9,6 +9,7 @@ type PriceQuoteProps = {
     uberX: boolean;
     price: number;
     expiresAt: Date;
+    used?: boolean;
 };
 
 export class PriceQuote {
@@ -19,13 +20,24 @@ export class PriceQuote {
     readonly price: number;
     readonly expiresAt: Date;
 
-    constructor({ token, riderId, ride, uberX, price, expiresAt }: PriceQuoteProps) {
+    private usedValue: boolean;
+
+    constructor({ token, riderId, ride, uberX, price, expiresAt, used = false }: PriceQuoteProps) {
         this.token = token;
         this.riderId = riderId;
         this.ride = { ...ride };
         this.uberX = uberX;
         this.price = price;
         this.expiresAt = new Date(expiresAt);
+        this.usedValue = used;
+    }
+
+    get isUsed(): boolean {
+        return this.usedValue;
+    }
+
+    markAsUsed(): void {
+        this.usedValue = true;
     }
 
     static create(props: Omit<PriceQuoteProps, "expiresAt"> & { now: Date }): PriceQuote {

@@ -11,6 +11,8 @@ import type { PriceQuoteRepository } from "../../domain/ports/price-quote.reposi
 import type { DateProvider } from "../../domain/ports/date.provider.js";
 import { QuoteExpiredError } from "../../domain/errors/quote-expired-error.js";
 import { UnknownQuoteError } from "../../domain/errors/unknown-quote-error.js";
+import { QuoteAlreadyUsedError } from "../../domain/errors/quote-already-used-error.js";
+import type { PriceQuote } from "../../domain/models/price-quote.js";
 
 export type BookRideParams =
     | { riderId: string; from: string; to: string; uberX?: boolean }
@@ -36,13 +38,18 @@ export class BookRideUseCase {
 
         let ride: Ride;
         let price: number;
+        let quote: PriceQuote | null = null;
 
         if ("token" in params) {
             // Avec un token : on reprend le devis, sans rescanner ni recalculer.
-            const quote = await this.quoteRepository.findByToken(params.token);
+            quote = await this.quoteRepository.findByToken(params.token);
 
-            if (!quote) {
+            if (!quote || quote.riderId !== params.riderId) {
                 throw new UnknownQuoteError(params.token);
+            }
+
+            if (quote.isUsed) {
+                throw new QuoteAlreadyUsedError(params.token);
             }
 
             if (quote.isExpired(this.dateProvider.now())) {
@@ -79,6 +86,11 @@ export class BookRideUseCase {
         });
 
         await this.bookingRepository.save(booking);
+
+        if (quote) {
+            quote.markAsUsed();
+            await this.quoteRepository.save(quote);
+        }
 
         return { id: booking.id };
     }
