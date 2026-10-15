@@ -6,6 +6,12 @@ import { RiderBuilder } from "./builders/rider.builder.js";
 describe("CalculatePriceUsecase", () => {
     let calculPriceUsecase: CalculatePriceUsecase;
     let dateProvider: StubDateProvider;
+    const parisToParis10km = {
+            id: "ride-1",
+            departure: "Paris",
+            destination: "Paris",
+            distanceKm: 10,
+          };
 
     beforeEach(() => {
         dateProvider = new StubDateProvider();
@@ -96,12 +102,6 @@ describe("CalculatePriceUsecase", () => {
       });
 
        it("should offer the UberX supplement on the rider's birthday, even on Christmas day", () => {
-          const parisToParis10km = {
-            id: "ride-1",
-            departure: "Paris",
-            destination: "Paris",
-            distanceKm: 10,
-          };
           dateProvider.date = new Date("2026-12-25T15:00:00Z");
           const rider = new RiderBuilder().withBirthDate(new Date("2000-12-25")).build();
 
@@ -117,6 +117,37 @@ describe("CalculatePriceUsecase", () => {
                   { uberX: true, rider },
               )
           ).toBe(25);
+      });
+
+      it("should add 50% during the morning rush hour", () => {
+          dateProvider.date = new Date("2026-10-14T06:30:00Z");   
+
+          expect(calculPriceUsecase.execute(parisToParis10km)).toBe(10.5);   
+      });
+
+      it("should add 50% during the evening rush hour", () => {
+          dateProvider.date = new Date("2026-10-14T17:30:00Z");   
+
+          expect(calculPriceUsecase.execute(parisToParis10km)).toBe(10.5);
+      });
+
+      it("should not add 50% at 9:00 sharp", () => {
+          dateProvider.date = new Date("2026-10-14T07:00:00Z");   
+
+          expect(calculPriceUsecase.execute(parisToParis10km)).toBe(7);
+      });
+
+      it("should not add 50% at 20:00 sharp", () => {
+          dateProvider.date = new Date("2026-10-14T18:00:00Z");   
+
+          expect(calculPriceUsecase.execute(parisToParis10km)).toBe(7);
+      });
+
+      it("should combine rush hour with Christmas and UberX", () => {
+          dateProvider.date = new Date("2026-12-25T07:30:00Z");   
+          const rider = new RiderBuilder().withBirthDate(new Date("2000-01-01")).build();
+
+          expect(calculPriceUsecase.execute(parisToParis10km, { uberX: true, rider })).toBe(26);
       });
 
 });
