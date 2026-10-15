@@ -27,17 +27,10 @@ export class CancelRideUseCase {
             return null;
         }
 
-
-        const today = this.dateProvider.now();
-        const birthDate = rider.birthDate;
-
-        const isBirthday =
-            today.getUTCDate() === birthDate.getUTCDate() &&
-            today.getUTCMonth() === birthDate.getUTCMonth();
-        const penalty = booking.status.equals(BookingStatus.ON_THE_WAY) && !isBirthday ? 5 : 0;
-
-        rider.balance -= penalty;
-        booking.status = BookingStatus.CANCELLED;
+        const penalty = booking.cancel({
+            riderBirthday: rider.isBirthday(this.dateProvider.now()),
+        });
+        rider.pay(penalty);
 
         await this.riderRepository.save(rider);
         await this.bookingRepository.save(booking);

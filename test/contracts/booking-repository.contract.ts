@@ -53,7 +53,8 @@ export function bookingRepositoryContract(
             const booking = aBooking("booking-1").build();
 
             await bookings.save(booking);
-            await bookings.save({ ...booking, status: BookingStatus.CANCELLED });
+            booking.cancel({ riderBirthday: false });
+            await bookings.save(booking);
 
             expect((await bookings.findById("booking-1"))?.status).toEqual(
                 BookingStatus.CANCELLED,
@@ -65,7 +66,7 @@ export function bookingRepositoryContract(
             await bookings.save(aBooking("booking-1").build());
 
             const readBack = await bookings.findById("booking-1");
-            readBack!.status = BookingStatus.CANCELLED;
+            readBack!.cancel({ riderBirthday: false });
 
             expect((await bookings.findById("booking-1"))?.status).toEqual(
                 BookingStatus.PENDING,

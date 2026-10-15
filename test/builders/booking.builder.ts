@@ -1,44 +1,47 @@
-import type { Booking } from "../../src/domain/models/booking.js";
+import { Booking } from "../../src/domain/models/booking.js";
+import type { Ride } from "../../src/domain/models/ride.js";
 import { BookingStatus } from "../../src/domain/value-objects/booking-status.js";
 import { RideBuilder } from "./ride.builder.js";
 
 export class BookingBuilder {
-    private booking: Booking = {
-        id: "",
-        riderId: "rider-1",
-        ride: new RideBuilder().build(),
-        status: BookingStatus.PENDING,
-    };
+    private id = "";
+    private riderId = "rider-1";
+    private ride: Ride = new RideBuilder().build();
+    private status = BookingStatus.PENDING;
+    private driverId: string | undefined;
 
     withId(id: string): this {
-        this.booking.id = id;
+        this.id = id;
         return this;
     }
 
-    withRiderId(riderId: string): BookingBuilder {
-        this.booking.riderId = riderId;
+    withRiderId(riderId: string): this {
+        this.riderId = riderId;
         return this;
     }
 
-    withRide(ride: Booking["ride"]): this {
-        this.booking.ride = ride;
+    withRide(ride: Ride): this {
+        this.ride = ride;
         return this;
     }
 
-    withStatus(status: string) {
-        this.booking.status = BookingStatus.of(status);
+    withStatus(status: string): this {
+        this.status = BookingStatus.of(status);
         return this;
     }
 
-    withDriverId(driverId: string) {
-        this.booking.driverId = driverId;
+    withDriverId(driverId: string): this {
+        this.driverId = driverId;
         return this;
     }
 
     build(): Booking {
-        return {
-            ...this.booking,
-            ride: { ...this.booking.ride },
-        };
+        return new Booking({
+            id: this.id,
+            riderId: this.riderId,
+            ride: this.ride,
+            status: this.status,
+            driverId: this.driverId,
+        });
     }
 }

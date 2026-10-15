@@ -9,7 +9,7 @@ import {
 } from "../../setup-integration-tests/docker-postgresql-manager.js";
 
 import { KnexBookingRepository } from "../../src/infra/knex-booking.repository.js";
-import type { Booking } from "../../src/domain/models/booking.js";
+import { Booking } from "../../src/domain/models/booking.js";
 import { BookingStatus } from "../../src/domain/value-objects/booking-status.js";
 import {
     bookingRepositoryContract,
@@ -38,7 +38,7 @@ describe("KnexBookingRepository", () => {
     });
 
     it("should save a booking in PostgreSQL", async () => {
-        const booking: Booking = {
+        const booking = new Booking({
             id: "booking-1",
             riderId: "rider-1",
             status: BookingStatus.PENDING,
@@ -48,7 +48,7 @@ describe("KnexBookingRepository", () => {
                 destination: "Lyon",
                 distanceKm: 460,
             },
-        };
+        });
 
         await sqlConnection("riders").insert({
             id: "rider-1",
@@ -78,7 +78,7 @@ describe("KnexBookingRepository", () => {
             birth_date: new Date("2000-01-01"),
         });
 
-        const booking: Booking = {
+        const booking = new Booking({
             id: "booking-1",
             riderId: "rider-1",
             driverId: "unknown-driver",
@@ -89,7 +89,7 @@ describe("KnexBookingRepository", () => {
                 destination: "Lyon",
                 distanceKm: 460,
             },
-        };
+        });
 
         await expect(repository.save(booking)).rejects.toThrow();
     });

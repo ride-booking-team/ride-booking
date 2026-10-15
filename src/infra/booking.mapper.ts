@@ -1,4 +1,4 @@
-import type { Booking } from "../domain/models/booking.js";
+import { Booking } from "../domain/models/booking.js";
 import { BookingStatus } from "../domain/value-objects/booking-status.js";
 
 export type BookingRow = {
@@ -34,18 +34,16 @@ export function toBookingRow(booking: Booking): BookingRow {
  * qui reste libre de les refuser.
  */
 export function toBooking(row: BookingRow): Booking {
-    return {
+    return new Booking({
         id: row.id,
         riderId: row.rider_id,
         status: BookingStatus.of(row.status),
-        ...(row.driver_id !== null
-            ? { driverId: row.driver_id }
-            : {}),
+        driverId: row.driver_id ?? undefined,
         ride: {
             id: row.ride_id,
             departure: row.departure,
             destination: row.destination,
             distanceKm: Number(row.distance_km),
         },
-    };
+    });
 }

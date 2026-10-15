@@ -1,5 +1,5 @@
 import type { BookingRepository } from "../../src/domain/ports/booking.repository.js";
-import type { Booking } from "../../src/domain/models/booking.js";
+import { Booking } from "../../src/domain/models/booking.js";
 
 export class FakeBookingRepository implements BookingRepository {
     private bookings: Booking[] = [];
@@ -32,5 +32,11 @@ export class FakeBookingRepository implements BookingRepository {
 // Comme une vraie base, le fake ne partage jamais ses objets :
 // il stocke et renvoie des copies.
 function copy(booking: Booking): Booking {
-    return { ...booking, ride: { ...booking.ride } };
+    return new Booking({
+        id: booking.id,
+        riderId: booking.riderId,
+        ride: booking.ride,
+        status: booking.status,
+        driverId: booking.driverId,
+    });
 }
