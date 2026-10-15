@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { CalculatePriceUsecase } from "../src/application/use-cases/calculate-price.usecase.js";
+import { StubDateProvider } from "./stub-date.provider.js";
 
 describe("CalculatePriceUsecase", () => {
     let calculPriceUsecase: CalculatePriceUsecase;
+    let dateProvider: StubDateProvider;
 
     beforeEach(() => {
-        calculPriceUsecase = new CalculatePriceUsecase();
+        dateProvider = new StubDateProvider();
+        calculPriceUsecase = new CalculatePriceUsecase(dateProvider);
     });
 
     it("should return 2 for Paris to Paris", () => {
@@ -51,4 +54,43 @@ describe("CalculatePriceUsecase", () => {
             })
         ).toBe(7);
     });
+
+     it("should double the price on Christmas day", () => {
+          dateProvider.date = new Date("2026-12-25T15:00:00Z");
+
+          expect(
+              calculPriceUsecase.execute({
+                  id: "ride-1",
+                  departure: "Paris",
+                  destination: "Paris",
+                  distanceKm: 10,
+              })
+          ).toBe(14);
+      });
+  
+      it("should not double the price on Christmas Eve", () => {
+          dateProvider.date = new Date("2026-12-24T20:00:00Z");
+
+          expect(
+              calculPriceUsecase.execute({
+                  id: "ride-1",
+                  departure: "Paris",
+                  destination: "Paris",
+                  distanceKm: 10,
+              })
+          ).toBe(7);
+      });
+
+      it("should not double the price the day after Christmas", () => {
+          dateProvider.date = new Date("2026-12-26T00:00:00Z");
+
+          expect(
+              calculPriceUsecase.execute({
+                  id: "ride-1",
+                  departure: "Paris",
+                  destination: "Paris",
+                  distanceKm: 10,
+              })
+          ).toBe(7);
+      });
 });
