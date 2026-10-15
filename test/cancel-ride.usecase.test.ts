@@ -6,6 +6,7 @@ import { BookingBuilder } from "./builders/booking.builder.js";
 import { RiderBuilder } from "./builders/rider.builder.js";
 import { CancelRideUseCase } from "../src/application/use-cases/cancel-ride.usecase.js";
 import { StubDateProvider } from "./stub-date.provider.js";
+import { BookingStatus } from "../src/domain/value-objects/booking-status.js";
 
 describe("CancelRideUseCase", () => {
     let cancelRideUseCase: CancelRideUseCase;
@@ -128,6 +129,6 @@ describe("CancelRideUseCase", () => {
 
         expect(result).toEqual({ penalty: 5 });
         expect(updatedRider?.balance).toBe(5);
-        expect(savedBooking?.status).toBe("cancelled");
+        expect(savedBooking?.status).toEqual(BookingStatus.CANCELLED);
     });
 });

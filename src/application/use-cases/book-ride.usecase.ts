@@ -1,10 +1,11 @@
-import type { Booking } from "../../domain/models/booking.js";
+import { Booking } from "../../domain/models/booking.js";
 import type { BookingRepository } from "../../domain/ports/booking.repository.js";
 import type { CalculatePriceUsecase } from "./calculate-price.usecase.js";
 import type { IDGenerator } from "../../domain/ports/id-generator.provider.js";
 import type { Ride } from "../../domain/models/ride.js";
 import type { Rider } from "../../domain/models/rider.js";
 import type {RiderRepository} from "../../domain/ports/rider.repository.js";
+import { BookingStatus } from "../../domain/value-objects/booking-status.js";
 
 export type BookRideParams = {
     riderId: string;
@@ -33,12 +34,12 @@ export class BookRideUseCase {
         if (!rider.canBook(price, existingBookings)) {
             return null;
         }
-        const booking: Booking = {
+        const booking = new Booking({
             id: this.idGenerator.generate(),
             riderId: rider.id,
             ride: params.ride,
-           status:"pending"
-        };
+            status: BookingStatus.PENDING,
+        });
 
         await this.bookingRepository.save(booking);
 

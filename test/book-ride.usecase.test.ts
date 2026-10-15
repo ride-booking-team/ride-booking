@@ -8,6 +8,7 @@ import { BookRideUseCase } from "../src/application/use-cases/book-ride.usecase.
 import { FakeBookingRepository } from "./fakes/fake-booking.repository.js";
 import { FakeRiderRepository } from "./fakes/fake-rider.repository.js";
 import { StubIDGenerator } from "./stub-id-generator.provider.js";
+import { BookingStatus } from "../src/domain/value-objects/booking-status.js";
 
 describe("BookRideUseCase", () => {
     let calculatePriceUsecase: CalculatePriceUsecase;
@@ -115,7 +116,7 @@ describe("BookRideUseCase", () => {
             id: result!.id,
             riderId: rider.id,
             ride,
-            status: "pending",
+            status: BookingStatus.PENDING,
         });
     });
 
