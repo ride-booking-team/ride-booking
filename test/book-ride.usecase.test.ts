@@ -12,6 +12,9 @@ import { BookingStatus } from "../src/domain/value-objects/booking-status.js";
 import { StubDateProvider } from "./stub-date.provider.js";
 import { FakeRouteScanner } from "./fakes/fake-route-scanner.js";
 import { AddressNotFoundError } from "../src/domain/errors/address-not-found-error.js";
+import { FakePriceQuoteRepository } from "./fakes/fake-price-quote.repository.js";
+import { PriceQuote } from "../src/domain/models/price-quote.js";
+import { QuoteExpiredError } from "../src/domain/errors/quote-expired-error.js";
 
 describe("BookRideUseCase", () => {
     let calculatePriceUsecase: CalculatePriceUsecase;
@@ -21,6 +24,7 @@ describe("BookRideUseCase", () => {
     let idGenerator: StubIDGenerator;
     let dateProvider: StubDateProvider;
     let fakeRouteScanner: FakeRouteScanner;
+    let quoteRepository: FakePriceQuoteRepository;
 
     beforeEach(() => {
         dateProvider = new StubDateProvider();
@@ -29,6 +33,7 @@ describe("BookRideUseCase", () => {
         fakeRiderRepository = new FakeRiderRepository();
         fakeRouteScanner = new FakeRouteScanner();
         idGenerator = new StubIDGenerator();
+        quoteRepository = new FakePriceQuoteRepository();
 
         bookRideUseCase = new BookRideUseCase(
             calculatePriceUsecase,
@@ -36,6 +41,8 @@ describe("BookRideUseCase", () => {
             fakeBookingRepository,
             fakeRiderRepository,
             fakeRouteScanner,
+            quoteRepository,
+            dateProvider,
         );
     });
 
@@ -266,6 +273,53 @@ describe("BookRideUseCase", () => {
                 to: "5 avenue Foch",
             }),
         ).rejects.toThrow(AddressNotFoundError);
+
+        expect(await fakeBookingRepository.findByRiderId(rider.id)).toEqual([]);
+    });
+
+    it("should book at the guaranteed price of a valid token, even if the price went up", async () => {
+        const rider = new RiderBuilder().withBalance(8).build();
+        await fakeRiderRepository.save(rider);
+
+        // devis fait à 7h58 à Paris : 7 € (pas encore l'heure de pointe)
+        await quoteRepository.save(PriceQuote.create({
+            token: "token-1",
+            riderId: rider.id,
+            ride: { id: "ride-1", departure: "Paris", destination: "Paris", distanceKm: 10 },
+            uberX: false,
+            price: 7,
+            now: new Date("2026-10-15T05:58:00Z"),
+        }));
+
+        // réservation à 8h01 à Paris : l'heure de pointe a commencé, le prix serait 10,50 €
+        dateProvider.date = new Date("2026-10-15T06:01:00Z");
+        idGenerator.id = "booking-1";
+
+        const result = await bookRideUseCase.execute({ riderId: rider.id, token: "token-1" });
+
+        expect(result).toEqual({ id: "booking-1" }); // 7 € ≤ 8 € → réservé au prix garanti
+        const [saved] = await fakeBookingRepository.findByRiderId(rider.id);
+        expect(saved?.ride).toEqual({ id: "ride-1", departure: "Paris", destination: "Paris", distanceKm: 10 });
+    });
+
+    it("should not book with an expired token", async () => {
+        const rider = new RiderBuilder().withBalance(100).build();
+        await fakeRiderRepository.save(rider);
+
+        await quoteRepository.save(PriceQuote.create({
+            token: "token-1",
+            riderId: rider.id,
+            ride: { id: "ride-1", departure: "Paris", destination: "Paris", distanceKm: 10 },
+            uberX: false,
+            price: 7,
+            now: new Date("2026-10-15T10:00:00Z"),
+        }));
+
+        dateProvider.date = new Date("2026-10-15T10:06:00Z"); // 6 minutes plus tard
+
+        await expect(
+            bookRideUseCase.execute({ riderId: rider.id, token: "token-1" }),
+        ).rejects.toThrow(QuoteExpiredError);
 
         expect(await fakeBookingRepository.findByRiderId(rider.id)).toEqual([]);
     });
