@@ -63,6 +63,15 @@ describe("KnexRiderRepository", () => {
         expect(rider?.balance).toBe(75);
     });
 
+    it("should keep the birth date, whatever the timezone of the server", async () => {
+        await repository.save(new Rider("rider-1", 100, new Date("2000-10-14")));
+
+        const rider = await repository.findById("rider-1");
+
+        expect(rider?.birthDate).toEqual(new Date("2000-10-14"));
+        expect(rider?.isBirthday(new Date("2026-10-14"))).toBe(true);
+    });
+
     it("should return null when rider does not exist", async () => {
         const rider = await repository.findById("unknown");
 

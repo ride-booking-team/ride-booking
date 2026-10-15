@@ -13,7 +13,8 @@ export function toRiderRow(rider: Rider): RiderRow {
     return {
         id: rider.id,
         balance: rider.balance,
-        birth_date: rider.birthDate,
+        // Le jour UTC, sans heure : sinon Postgres le décale selon le fuseau du serveur.
+        birth_date: rider.birthDate.toISOString().slice(0, 10),
     };
 }
 
@@ -25,6 +26,19 @@ export function toRider(row: RiderRow): Rider {
     return new Rider(
         row.id,
         Number(row.balance),
-        new Date(row.birth_date),
+        toUtcDay(row.birth_date),
     );
+}
+
+/**
+ * Le driver pg lit une colonne DATE comme minuit *heure locale* :
+ * à Paris, le 14 octobre devient le 13 à 22h UTC.
+ * On reprend le jour tel qu'il est écrit en base, à minuit UTC.
+ */
+function toUtcDay(value: Date | string): Date {
+    if (typeof value === "string") {
+        return new Date(`${value.slice(0, 10)}T00:00:00Z`);
+    }
+
+    return new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()));
 }

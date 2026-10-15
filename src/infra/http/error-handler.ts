@@ -1,6 +1,8 @@
 import type { ErrorRequestHandler } from "express";
 
 import { AddressNotFoundError } from "../../domain/errors/address-not-found-error.js";
+import { BookingAlreadyCancelledError } from "../../domain/errors/booking-already-cancelled-error.js";
+import { BookingNotFoundError } from "../../domain/errors/booking-not-found-error.js";
 import { InsufficientFundsError } from "../../domain/errors/insufficient-funds-error.js";
 import { PendingBookingError } from "../../domain/errors/pending-booking-error.js";
 import { RiderNotFoundError } from "../../domain/errors/rider-not-found-error.js";
@@ -14,10 +16,12 @@ type ErrorClass = new (...args: never[]) => Error;
  */
 const STATUS_BY_ERROR: ReadonlyArray<[ErrorClass, number]> = [
     [RiderNotFoundError, 404],
+    [BookingNotFoundError, 404],
     [AddressNotFoundError, 422],
     [RouteNotFoundError, 422],
     [InsufficientFundsError, 402],
     [PendingBookingError, 409],
+    [BookingAlreadyCancelledError, 409],
 ];
 
 export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
@@ -29,7 +33,6 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, _ne
     const status = STATUS_BY_ERROR.find(([errorClass]) => error instanceof errorClass)?.[1];
 
     if (status === undefined) {
-        // Erreur inattendue : on la journalise, sans montrer ses détails au client.
         console.error(error);
         response.status(500).json({ error: "internal error" });
         return;
