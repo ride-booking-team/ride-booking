@@ -3,13 +3,16 @@ import type { Booking } from "./booking.js";
 const MAX_BLOCKED_DRIVERS = 3;
 
 export class Rider {
-    private readonly blockedDriverIdsValue: string[] = [];
+    private readonly blockedDriverIdsValue: string[];
 
     constructor(
         readonly id: string,
         private balanceValue: number,
         readonly birthDate: Date,
-    ) {}
+        blockedDriverIds: ReadonlyArray<string> = [],
+    ) {
+        this.blockedDriverIdsValue = [...blockedDriverIds];
+    }
 
     get balance(): number {
         return this.balanceValue;
