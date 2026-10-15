@@ -7,6 +7,9 @@ import { RiderBuilder } from "./builders/rider.builder.js";
 import { CancelRideUseCase } from "../src/application/use-cases/cancel-ride.usecase.js";
 import { StubDateProvider } from "./stub-date.provider.js";
 import { BookingStatus } from "../src/domain/value-objects/booking-status.js";
+import { BookingAlreadyCancelledError } from "../src/domain/errors/booking-already-cancelled-error.js";
+import { BookingNotFoundError } from "../src/domain/errors/booking-not-found-error.js";
+import { RiderNotFoundError } from "../src/domain/errors/rider-not-found-error.js";
 
 describe("CancelRideUseCase", () => {
     let cancelRideUseCase: CancelRideUseCase;
@@ -64,6 +67,25 @@ describe("CancelRideUseCase", () => {
         expect(result).toEqual({ penalty: 5 });
     });
 
+    it("should reject cancellation of an unknown booking", async () => {
+        await expect(
+            cancelRideUseCase.execute({ bookingId: "unknown" }),
+        ).rejects.toThrow(BookingNotFoundError);
+    });
+
+    it("should reject cancellation when the rider of the booking is unknown", async () => {
+        const booking = new BookingBuilder()
+            .withId("booking-1")
+            .withRiderId("unknown-rider")
+            .withStatus("pending")
+            .build();
+        await fakeBookingRepository.save(booking);
+
+        await expect(
+            cancelRideUseCase.execute({ bookingId: "booking-1" }),
+        ).rejects.toThrow(RiderNotFoundError);
+    });
+
     it("should reject cancellation when booking is already cancelled", async () => {
         const booking = new BookingBuilder()
             .withStatus("cancelled")
@@ -71,11 +93,9 @@ describe("CancelRideUseCase", () => {
 
         await fakeBookingRepository.save(booking);
 
-        const result = await cancelRideUseCase.execute({
+        await expect(cancelRideUseCase.execute({
             bookingId: booking.id,
-        });
-
-        expect(result).toBeNull();
+        })).rejects.toThrow(BookingAlreadyCancelledError);
     });
 
     it("should cancel without penalty on rider birthday", async () => {

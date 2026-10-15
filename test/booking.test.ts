@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { BookingStatus } from "../src/domain/value-objects/booking-status.js";
 import { BookingBuilder } from "./builders/booking.builder.js";
+import { BookingAlreadyCancelledError } from "../src/domain/errors/booking-already-cancelled-error.js";
 
 describe("Booking", () => {
     it("cancelling a pending booking costs nothing", () => {
@@ -37,7 +38,7 @@ describe("Booking", () => {
         const booking = new BookingBuilder().withStatus("cancelled").build();
 
         expect(() => booking.cancel({ riderBirthday: false })).toThrow(
-            /already cancelled/,
+            BookingAlreadyCancelledError,
         );
         expect(booking.status).toEqual(BookingStatus.CANCELLED);
     });

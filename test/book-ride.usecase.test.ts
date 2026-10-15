@@ -16,6 +16,9 @@ import { PriceQuote } from "../src/domain/models/price-quote.js";
 import { QuoteExpiredError } from "../src/domain/errors/quote-expired-error.js";
 import { UnknownQuoteError } from "../src/domain/errors/unknown-quote-error.js";
 import { QuoteAlreadyUsedError } from "../src/domain/errors/quote-already-used-error.js";
+import { InsufficientFundsError } from "../src/domain/errors/insufficient-funds-error.js";
+import { PendingBookingError } from "../src/domain/errors/pending-booking-error.js";
+import { RiderNotFoundError } from "../src/domain/errors/rider-not-found-error.js";
 
 describe("BookRideUseCase", () => {
     let calculatePriceUsecase: CalculatePriceUsecase;
@@ -60,17 +63,21 @@ describe("BookRideUseCase", () => {
         return { from: FROM, to: TO };
     };
 
+    it("should reject a booking for an unknown rider", async () => {
+        await expect(
+            bookRideUseCase.execute({ riderId: "unknown", ...aRouteInParis() }),
+        ).rejects.toThrow(RiderNotFoundError);
+    });
+
     it("should reject a ride when the rider has insufficient balance", async () => {
         const rider = new RiderBuilder().withBalance(1).build();
 
         await fakeRiderRepository.save(rider);
 
-        const result = await bookRideUseCase.execute({
+        await expect(bookRideUseCase.execute({
             riderId: rider.id,
             ...aRouteInParis(),
-        });
-
-        expect(result).toBeNull();
+        })).rejects.toThrow(InsufficientFundsError);
     });
 
     it("should create a booking when the rider has sufficient balance", async () => {
@@ -112,12 +119,10 @@ describe("BookRideUseCase", () => {
 
         await fakeBookingRepository.save(existingBooking);
 
-        const result = await bookRideUseCase.execute({
+        await expect(bookRideUseCase.execute({
             riderId: rider.id,
             ...aRouteInParis(),
-        });
-
-        expect(result).toBeNull();
+        })).rejects.toThrow(PendingBookingError);
     });
 
     it("should save the newly created booking", async () => {
@@ -157,12 +162,10 @@ describe("BookRideUseCase", () => {
 
         await fakeBookingRepository.save(existingBooking);
 
-        const result = await bookRideUseCase.execute({
+        await expect(bookRideUseCase.execute({
             riderId: rider.id,
             ...aRouteInParis(),
-        });
-
-        expect(result).toBeNull();
+        })).rejects.toThrow(PendingBookingError);
     });
 
     it("should allow another booking when a driver is assigned", async () => {
@@ -195,13 +198,11 @@ describe("BookRideUseCase", () => {
             .build();
         await fakeRiderRepository.save(rider);
 
-        const result = await bookRideUseCase.execute({
+        await expect(bookRideUseCase.execute({
             riderId: rider.id,
             ...aRouteInParis(10),
             uberX: true,
-        });
-
-        expect(result).toBeNull();
+        })).rejects.toThrow(InsufficientFundsError);
     });
 
     it("should accept the same UberX ride on the rider's birthday", async () => {
