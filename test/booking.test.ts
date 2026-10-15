@@ -66,4 +66,21 @@ describe("Booking", () => {
 
         expect(booking.ride.distanceKm).toBe(460);
     });
+
+    it("a driver can be assigned to a pending booking", () => {
+        const booking = new BookingBuilder().withStatus("pending").build();
+
+        booking.assignDriver("driver-1");
+
+        expect(booking.driverId).toBe("driver-1");
+        expect(booking.status).toEqual(BookingStatus.ASSIGNED);
+    });
+
+    it("a driver cannot be assigned to a cancelled booking, and the booking does not change", () => {
+        const booking = new BookingBuilder().withStatus("cancelled").build();
+
+        expect(() => booking.assignDriver("driver-1")).toThrow(/cancelled/);
+        expect(booking.driverId).toBeUndefined();
+        expect(booking.status).toEqual(BookingStatus.CANCELLED);
+    });
 });
