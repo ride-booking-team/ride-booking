@@ -119,6 +119,31 @@ describe("CalculatePriceUsecase", () => {
           ).toBe(25);
       });
 
+      it("should add 5 euros for an UberX ride", () => {
+          const rider = new RiderBuilder().withBirthDate(new Date("2000-01-01")).build();
+
+          expect(calculPriceUsecase.execute(parisToParis10km, { uberX: true, rider })).toBe(12);
+      });
+
+      it("should offer the UberX supplement on the rider's birthday", () => {
+          const rider = new RiderBuilder().withBirthDate(new Date("2000-10-14")).build();
+
+          expect(calculPriceUsecase.execute(parisToParis10km, { uberX: true, rider })).toBe(7);
+      });
+
+      it("should not change a normal ride on the rider's birthday", () => {
+          const rider = new RiderBuilder().withBirthDate(new Date("2000-10-14")).build();
+
+          expect(calculPriceUsecase.execute(parisToParis10km, { uberX: false, rider })).toBe(7);
+      });
+
+      it("should add the UberX supplement after doubling the price on Christmas day", () => {
+          dateProvider.date = new Date("2026-12-25T15:00:00Z");
+          const rider = new RiderBuilder().withBirthDate(new Date("2000-01-01")).build();
+
+          expect(calculPriceUsecase.execute(parisToParis10km, { uberX: true, rider })).toBe(19);
+      });
+
       it("should add 50% during the morning rush hour", () => {
           dateProvider.date = new Date("2026-10-14T06:30:00Z");   
 
