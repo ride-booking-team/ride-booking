@@ -10,18 +10,27 @@ export class FakeBookingRepository implements BookingRepository {
         );
 
         if (index === -1) {
-            this.bookings.push(booking);
+            this.bookings.push(copy(booking));
         } else {
-            this.bookings[index] = booking;
+            this.bookings[index] = copy(booking);
         }
     }
 
     async findByRiderId(riderId: string): Promise<Booking[]> {
         return this.bookings
             .filter((booking) => booking.riderId === riderId)
-            .map((booking) => ({ ...booking }));
+            .map(copy);
     }
+
     async findById(id: string): Promise<Booking | null> {
-        return this.bookings.find((booking) => booking.id === id) ?? null;
+        const booking = this.bookings.find((booking) => booking.id === id);
+
+        return booking ? copy(booking) : null;
     }
+}
+
+// Comme une vraie base, le fake ne partage jamais ses objets :
+// il stocke et renvoie des copies.
+function copy(booking: Booking): Booking {
+    return { ...booking, ride: { ...booking.ride } };
 }

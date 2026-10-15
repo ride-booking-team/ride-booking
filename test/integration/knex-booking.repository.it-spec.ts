@@ -11,6 +11,11 @@ import {
 import { KnexBookingRepository } from "../../src/infra/knex-booking.repository.js";
 import type { Booking } from "../../src/domain/models/booking.js";
 import { BookingStatus } from "../../src/domain/value-objects/booking-status.js";
+import {
+    bookingRepositoryContract,
+    CONTRACT_DRIVER_ID,
+    CONTRACT_RIDER_IDS,
+} from "../contracts/booking-repository.contract.js";
 
 describe("KnexBookingRepository", () => {
     let sqlConnection: Knex;
@@ -66,63 +71,6 @@ describe("KnexBookingRepository", () => {
         expect(Number(savedBooking.distance_km)).toBe(460);
     });
 
-    it("should find a booking by id", async () => {
-        await sqlConnection("riders").insert({
-            id: "rider-1",
-            balance: 100,
-            birth_date: new Date("2000-01-01"),
-        });
-
-        const booking: Booking = {
-            id: "booking-1",
-            riderId: "rider-1",
-            status: BookingStatus.PENDING,
-            ride: {
-                id: "ride-1",
-                departure: "Paris",
-                destination: "Lyon",
-                distanceKm: 460,
-            },
-        };
-
-        await repository.save(booking);
-
-        const result = await repository.findById("booking-1");
-
-        expect(result).toEqual(booking);
-    });
-    it("should save a booking with an assigned driver", async () => {
-        await sqlConnection("riders").insert({
-            id: "rider-1",
-            balance: 100,
-            birth_date: new Date("2000-01-01"),
-        });
-        await sqlConnection("drivers").insert({
-            id: "driver-1",
-            name: "Alice",
-            available: false,
-        });
-
-        const booking: Booking = {
-            id: "booking-1",
-            riderId: "rider-1",
-            driverId: "driver-1",
-            status: BookingStatus.ASSIGNED,
-            ride: {
-                id: "ride-1",
-                departure: "Paris",
-                destination: "Lyon",
-                distanceKm: 460,
-            },
-        };
-
-        await repository.save(booking);
-
-        const result = await repository.findById("booking-1");
-
-        expect(result).toEqual(booking);
-    });
-
     it("should reject a booking with an unknown driver", async () => {
         await sqlConnection("riders").insert({
             id: "rider-1",
@@ -173,9 +121,20 @@ describe("KnexBookingRepository", () => {
         );
     });
 
-    it("should return null when booking does not exist", async () => {
-        const result = await repository.findById("unknown-booking");
+    bookingRepositoryContract("KnexBookingRepository", async () => {
+        await sqlConnection("riders").insert(
+            CONTRACT_RIDER_IDS.map((id) => ({
+                id,
+                balance: 100,
+                birth_date: new Date("2000-01-01"),
+            })),
+        );
+        await sqlConnection("drivers").insert({
+            id: CONTRACT_DRIVER_ID,
+            name: "Alice",
+            available: false,
+        });
 
-        expect(result).toBeNull();
+        return repository;
     });
 });
