@@ -121,4 +121,34 @@ describe("POST /rides/estimate then POST /rides/book with the token", () => {
         expect(response.status).toBe(404);
         expect(response.body).toEqual({ error: `unknown price quote: ${token}` });
     });
+
+    it.each([
+        ["no token and no from/to", { riderId: "rider-1" }],
+        ["an empty token", { riderId: "rider-1", token: "" }],
+        ["a token that is not a string", { riderId: "rider-1", token: 123 }],
+        ["a token without riderId", { token: "some-token" }],
+    ])("should answer 400 for %s", async (_case, body) => {
+        const response = await request(testApp.app).post("/rides/book").send(body);
+
+        expect(response.status).toBe(400);
+        expect(response.body).toEqual({ error: expect.any(String) });
+    });
+
+    it("should follow the token, not from/to, when both are given", async () => {
+        const { token } = await anEstimate();
+        testApp.routeScanner.withRoute("Gare du Nord", "Gare de Lyon", {
+            departureCity: "Paris",
+            destinationCity: "Paris",
+            distanceKm: 5,
+        });
+
+        const response = await request(testApp.app)
+            .post("/rides/book")
+            .send({ riderId: "rider-1", token, from: "Gare du Nord", to: "Gare de Lyon" });
+
+        expect(response.status).toBe(201);
+        const booking = await savedBooking(response.body.id);
+        expect(booking.destination).toBe("Lyon");
+        expect(Number(booking.price)).toBe(240);
+    });
 });
