@@ -5,10 +5,9 @@ import type { BookingRepository } from "../domain/ports/booking.repository.js";
 import {
     toBooking,
     toBookingRow,
-    toRideRow,
     type BookingRow,
-    type RideRow,
 } from "./booking.mapper.js";
+import { toRideRow, type RideRow } from "./ride.mapper.js";
 
 export class KnexBookingRepository implements BookingRepository {
     constructor(private readonly knex: Knex) {}

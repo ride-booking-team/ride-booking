@@ -1,13 +1,5 @@
 import type { Booking } from "../domain/models/booking.js";
-import type { Ride } from "../domain/models/ride.js";
 import { BookingStatus } from "../domain/value-objects/booking-status.js";
-
-export type RideRow = {
-    id: string;
-    departure: string;
-    destination: string;
-    distance_km: number | string;
-};
 
 export type BookingRow = {
     id: string;
@@ -24,15 +16,6 @@ export type BookingRow = {
  * Le modèle métier vers les lignes SQL.
  * C'est ici que le métier devient plat.
  */
-export function toRideRow(ride: Ride): RideRow {
-    return {
-        id: ride.id,
-        departure: ride.departure,
-        destination: ride.destination,
-        distance_km: ride.distanceKm,
-    };
-}
-
 export function toBookingRow(booking: Booking): BookingRow {
     return {
         id: booking.id,

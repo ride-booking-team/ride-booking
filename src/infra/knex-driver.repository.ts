@@ -1,23 +1,14 @@
 import type { Knex } from "knex";
 import type { Driver } from "../domain/models/driver.js";
 import type { DriverRepository } from "../domain/ports/driver.repository.js";
-
-type DriverRow = {
-    id: string;
-    name: string;
-    available: boolean;
-};
+import { toDriver, toDriverRow, type DriverRow } from "./driver.mapper.js";
 
 export class KnexDriverRepository implements DriverRepository {
     constructor(private readonly knex: Knex) {}
 
     async save(driver: Driver): Promise<void> {
-        await this.knex("drivers")
-            .insert({
-                id: driver.id,
-                name: driver.name,
-                available: driver.available,
-            })
+        await this.knex<DriverRow>("drivers")
+            .insert(toDriverRow(driver))
             .onConflict("id")
             .merge();
     }
@@ -27,14 +18,6 @@ export class KnexDriverRepository implements DriverRepository {
             .where({ id })
             .first();
 
-        if (!row) {
-            return null;
-        }
-
-        return {
-            id: row.id,
-            name: row.name,
-            available: row.available,
-        };
+        return row ? toDriver(row) : null;
     }
 }
