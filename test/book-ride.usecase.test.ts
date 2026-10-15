@@ -33,8 +33,8 @@ describe("BookRideUseCase", () => {
     beforeEach(() => {
         dateProvider = new StubDateProvider();
         calculatePriceUsecase = new CalculatePriceUsecase(dateProvider);
-        fakeBookingRepository = new FakeBookingRepository();
         fakeRiderRepository = new FakeRiderRepository();
+        fakeBookingRepository = new FakeBookingRepository(fakeRiderRepository);
         fakeRouteScanner = new FakeRouteScanner();
         idGenerator = new StubIDGenerator();
         quoteRepository = new InMemoryPriceQuoteRepository();
@@ -161,6 +161,29 @@ describe("BookRideUseCase", () => {
         const saveRider = await fakeRiderRepository.findById(rider.id);
         expect(saveRider?.loyaltyPoints).toBe(5);
     })
+
+    it("should not give a loyalty point when the booking is refused", async () => {
+        const rider = new RiderBuilder().withBalance(1).build();
+        await fakeRiderRepository.save(rider);
+
+        await expect(
+            bookRideUseCase.execute({ riderId: rider.id, ...aRouteInParis() }),
+        ).rejects.toThrow(InsufficientFundsError);
+
+        expect((await fakeRiderRepository.findById(rider.id))?.loyaltyPoints).toBe(0);
+    });
+
+    it("should not keep the booking when the loyalty point cannot be saved", async () => {
+        const rider = new RiderBuilder().build();
+        await fakeRiderRepository.save(rider);
+        fakeRiderRepository.failOnSave();
+
+        await expect(
+            bookRideUseCase.execute({ riderId: rider.id, ...aRouteInParis() }),
+        ).rejects.toThrow();
+
+        expect(await fakeBookingRepository.findByRiderId(rider.id)).toEqual([]);
+    });
 
     it("should reject another booking when no driver is assigned", async () => {
         const rider = new RiderBuilder().build();

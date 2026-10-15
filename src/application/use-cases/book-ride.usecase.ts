@@ -85,9 +85,9 @@ export class BookRideUseCase {
             price,
         });
 
-        await this.bookingRepository.save(booking);
         rider.earnLoyaltyPoints();
-        await this.riderRepository.save(rider);
+        // Le point et la réservation sont enregistrés ensemble, ou pas du tout.
+        await this.bookingRepository.saveWithRider(booking, rider);
 
         if (quote) {
             quote.markAsUsed();

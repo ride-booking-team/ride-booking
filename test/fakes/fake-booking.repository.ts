@@ -1,8 +1,23 @@
 import type { BookingRepository } from "../../src/domain/ports/booking.repository.js";
+import type { RiderRepository } from "../../src/domain/ports/rider.repository.js";
 import { Booking } from "../../src/domain/models/booking.js";
+import type { Rider } from "../../src/domain/models/rider.js";
 
 export class FakeBookingRepository implements BookingRepository {
     private bookings: Booking[] = [];
+
+    constructor(private readonly riders?: RiderRepository) {}
+
+    // Tout ou rien, comme la transaction de la vraie base :
+    // si le rider n'est pas enregistré, la réservation non plus.
+    async saveWithRider(booking: Booking, rider: Rider): Promise<void> {
+        if (!this.riders) {
+            throw new Error("FakeBookingRepository needs a RiderRepository to save a rider");
+        }
+
+        await this.riders.save(rider);
+        await this.save(booking);
+    }
 
     async save(booking: Booking): Promise<void> {
         const index = this.bookings.findIndex(

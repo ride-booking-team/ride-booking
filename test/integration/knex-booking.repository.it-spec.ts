@@ -11,6 +11,7 @@ import {
 import { KnexBookingRepository } from "../../src/infra/knex-booking.repository.js";
 import { Booking } from "../../src/domain/models/booking.js";
 import { BookingStatus } from "../../src/domain/value-objects/booking-status.js";
+import { Rider } from "../../src/domain/models/rider.js";
 import {
     bookingRepositoryContract,
     CONTRACT_DRIVER_ID,
@@ -71,6 +72,56 @@ describe("KnexBookingRepository", () => {
         expect(savedBooking.destination).toBe("Lyon");
         expect(Number(savedBooking.distance_km)).toBe(460);
         expect(Number(savedBooking.price)).toBe(240);
+    });
+
+    describe("saveWithRider", () => {
+        const aBooking = () =>
+            new Booking({
+                id: "booking-1",
+                riderId: "rider-1",
+                status: BookingStatus.PENDING,
+                price: 7,
+                ride: {
+                    id: "ride-1",
+                    departure: "Paris",
+                    destination: "Paris",
+                    distanceKm: 10,
+                },
+            });
+
+        beforeEach(async () => {
+            await sqlConnection("riders").insert({
+                id: "rider-1",
+                balance: 100,
+                birth_date: "2000-01-01",
+            });
+        });
+
+        it("should save the booking and the rider's loyalty point together", async () => {
+            const rider = new Rider("rider-1", 100, new Date("2000-01-01"), [], 1);
+
+            await repository.saveWithRider(aBooking(), rider);
+
+            const booking = await sqlConnection("bookings").where({ id: "booking-1" }).first();
+            const riderRow = await sqlConnection("riders").where({ id: "rider-1" }).first();
+            expect(booking).toBeDefined();
+            expect(riderRow.loyalty_points).toBe(1);
+        });
+
+        it("should not save the booking when the rider cannot be saved (rollback)", async () => {
+            // Un solde trop grand pour la colonne decimal(10, 2) :
+            // Postgres refuse d'écrire ce rider, APRÈS avoir écrit la réservation.
+            const unsavableRider = new Rider("rider-1", 1_000_000_000, new Date("2000-01-01"), [], 1);
+
+            await expect(
+                repository.saveWithRider(aBooking(), unsavableRider),
+            ).rejects.toThrow(/numeric field overflow/);
+
+            expect(await sqlConnection("bookings").where({ id: "booking-1" })).toEqual([]);
+            expect(await sqlConnection("rides").where({ id: "ride-1" })).toEqual([]);
+            const riderRow = await sqlConnection("riders").where({ id: "rider-1" }).first();
+            expect(riderRow.loyalty_points).toBe(0);
+        });
     });
 
     it("should reject a booking with an unknown driver", async () => {

@@ -72,6 +72,26 @@ describe("KnexRiderRepository", () => {
         expect(rider?.isBirthday(new Date("2026-10-14"))).toBe(true);
     });
 
+    it("should keep the rider's loyalty points", async () => {
+        await repository.save(new Rider("rider-1", 100, new Date("2000-05-15"), [], 3));
+
+        const rider = await repository.findById("rider-1");
+
+        expect(rider?.loyaltyPoints).toBe(3);
+    });
+
+    it("should give no loyalty points to a rider saved before the loyalty program", async () => {
+        await sqlConnection("riders").insert({
+            id: "rider-1",
+            balance: 100,
+            birth_date: "2000-05-15",
+        });
+
+        const rider = await repository.findById("rider-1");
+
+        expect(rider?.loyaltyPoints).toBe(0);
+    });
+
     it("should return null when rider does not exist", async () => {
         const rider = await repository.findById("unknown");
 
