@@ -4,6 +4,7 @@ export type RiderRow = {
     id: string;
     balance: number | string;
     birth_date: Date | string;
+    loyalty_points: number;
 };
 
 /**
@@ -15,6 +16,7 @@ export function toRiderRow(rider: Rider): RiderRow {
         balance: rider.balance,
         // Le jour UTC, sans heure : sinon Postgres le décale selon le fuseau du serveur.
         birth_date: rider.birthDate.toISOString().slice(0, 10),
+        loyalty_points: rider.loyaltyPoints,
     };
 }
 
@@ -27,6 +29,8 @@ export function toRider(row: RiderRow): Rider {
         row.id,
         Number(row.balance),
         toUtcDay(row.birth_date),
+        [],
+        row.loyalty_points,
     );
 }
 

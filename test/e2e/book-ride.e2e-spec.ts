@@ -59,6 +59,26 @@ describe("POST /rides/book", () => {
         expect(Number(saved.price)).toBe(7);
     });
 
+    it("should give the rider a loyalty point for the booked ride", async () => {
+        await aRider(7);
+
+        const response = await book({ riderId: "rider-1", from: FROM, to: TO });
+
+        expect(response.status).toBe(201);
+        const rider = await testApp.knex("riders").where({ id: "rider-1" }).first();
+        expect(rider.loyalty_points).toBe(1);
+    });
+
+    it("should not give a loyalty point when the booking is refused", async () => {
+        await aRider(1);
+
+        const response = await book({ riderId: "rider-1", from: FROM, to: TO });
+
+        expect(response.status).toBe(402);
+        const rider = await testApp.knex("riders").where({ id: "rider-1" }).first();
+        expect(rider.loyalty_points).toBe(0);
+    });
+
     it.each([
         ["riderId", { from: FROM, to: TO }],
         ["from", { riderId: "rider-1", to: TO }],

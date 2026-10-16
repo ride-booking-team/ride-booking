@@ -33,8 +33,8 @@ describe("BookRideUseCase", () => {
     beforeEach(() => {
         dateProvider = new StubDateProvider();
         calculatePriceUsecase = new CalculatePriceUsecase(dateProvider);
-        fakeBookingRepository = new FakeBookingRepository();
         fakeRiderRepository = new FakeRiderRepository();
+        fakeBookingRepository = new FakeBookingRepository(fakeRiderRepository);
         fakeRouteScanner = new FakeRouteScanner();
         idGenerator = new StubIDGenerator();
         quoteRepository = new InMemoryPriceQuoteRepository();
@@ -136,6 +136,7 @@ describe("BookRideUseCase", () => {
             ...aRouteInParis(),
         });
 
+
         expect(result).not.toBeNull();
 
         const savedBookings =
@@ -148,6 +149,40 @@ describe("BookRideUseCase", () => {
             ride: { departure: "Paris", destination: "Paris", distanceKm: 10 },
             status: BookingStatus.PENDING,
         });
+    });
+
+
+    it("should give the rider a loyalty point for the booked ride", async () => {
+        const rider = new RiderBuilder().withLoyaltyPoints(4).build();
+        await fakeRiderRepository.save(rider);
+
+        await bookRideUseCase.execute({riderId: rider.id, ...aRouteInParis()});
+
+        const saveRider = await fakeRiderRepository.findById(rider.id);
+        expect(saveRider?.loyaltyPoints).toBe(5);
+    })
+
+    it("should not give a loyalty point when the booking is refused", async () => {
+        const rider = new RiderBuilder().withBalance(1).build();
+        await fakeRiderRepository.save(rider);
+
+        await expect(
+            bookRideUseCase.execute({ riderId: rider.id, ...aRouteInParis() }),
+        ).rejects.toThrow(InsufficientFundsError);
+
+        expect((await fakeRiderRepository.findById(rider.id))?.loyaltyPoints).toBe(0);
+    });
+
+    it("should not keep the booking when the loyalty point cannot be saved", async () => {
+        const rider = new RiderBuilder().build();
+        await fakeRiderRepository.save(rider);
+        fakeRiderRepository.failOnSave();
+
+        await expect(
+            bookRideUseCase.execute({ riderId: rider.id, ...aRouteInParis() }),
+        ).rejects.toThrow();
+
+        expect(await fakeBookingRepository.findByRiderId(rider.id)).toEqual([]);
     });
 
     it("should reject another booking when no driver is assigned", async () => {

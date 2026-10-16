@@ -23,6 +23,20 @@ describe("Rider", () => {
         expect(rider.balance).toBe(5);
     });
 
+    it("a new rider has no loyalty points", () => {
+        const rider = new RiderBuilder().build();
+
+        expect(rider.loyaltyPoints).toBe(0);
+    })
+
+    it("a rider earns one loyalty point at a time", () => {
+        const rider = new RiderBuilder().withLoyaltyPoints(2).build();
+
+        rider.earnLoyaltyPoints();
+
+        expect(rider.loyaltyPoints).toBe(3);
+    })
+
     it("a rider can block a driver", () => {
         const rider = new RiderBuilder().build();
 

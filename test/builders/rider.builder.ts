@@ -4,6 +4,12 @@ export class RiderBuilder {
     private id = "rider-1";
     private balance = 10;
     private birthDate = new Date("2000-01-01");
+    private loyaltyPoints = 0;
+
+    withLoyaltyPoints(loyaltyPoints: number): this {
+        this.loyaltyPoints = loyaltyPoints;
+        return this;
+    }
 
     withId(id: string): this {
         this.id = id;
@@ -20,6 +26,6 @@ export class RiderBuilder {
     }
 
     build(): Rider {
-        return new Rider(this.id, this.balance, this.birthDate);
+        return new Rider(this.id, this.balance, this.birthDate, [],this.loyaltyPoints);
     }
 }
